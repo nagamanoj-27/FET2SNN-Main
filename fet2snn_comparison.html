@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>FET2SNN – Device Comparison Mode</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Fira+Code:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #050b1a;
+            color: #e2e8f0;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+        .app-container {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* ── Left Panel ── */
+        .compare-panel {
+            width: 310px;
+            min-width: 260px;
+            background: rgba(10, 14, 26, 0.97);
+            border-right: 1px solid rgba(100,140,255,0.18);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            z-index: 20;
+            padding: 14px;
+            gap: 12px;
+            font-size: 12px;
+        }
+        .panel-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #88aaff;
+            letter-spacing: 1px;
+            text-align: center;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(100,140,255,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        .device-card {
+            background: rgba(20, 28, 50, 0.8);
+            border-radius: 10px;
+            padding: 10px 12px;
+            border: 1px solid rgba(100,140,255,0.2);
+            transition: border-color .2s, box-shadow .2s;
+        }
+        .device-card.active {
+            border: 2px solid #4caf50;
+            background: rgba(76,175,80,0.07);
+            box-shadow: 0 0 12px rgba(76,175,80,0.25);
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid rgba(100,140,255,0.15);
+        }
+        .card-header h3 { font-size: 12px; font-weight: 700; color: #c8d8ff; }
+        .badge {
+            font-size: 9px;
+            padding: 2px 8px;
+            border-radius: 20px;
+            background: rgba(100,140,255,0.15);
+            border: 1px solid rgba(100,140,255,0.3);
+            color: #88aaff;
+            font-family: 'Fira Code', monospace;
+        }
+        .badge.active-badge {
+            background: rgba(76,175,80,0.2);
+            border-color: #4caf50;
+            color: #4caf50;
+        }
+
+        /* sliders */
+        .control-group { margin-bottom: 8px; }
+        .control-group label {
+            display: block;
+            font-size: 10px;
+            color: #94a3b8;
+            margin-bottom: 3px;
+            font-weight: 500;
+        }
+        input[type="range"] {
+            width: 100%;
+            height: 3px;
+            accent-color: #4488ff;
+            cursor: pointer;
+            background: rgba(100,140,255,0.2);
+            border-radius: 2px;
+            outline: none;
+            border: none;
+        }
+        select {
+            width: 100%;
+            background: #0f1830;
+            border: 1px solid rgba(100,140,255,0.3);
+            color: #e2e8f0;
+            padding: 4px 6px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            outline: none;
+        }
+        .value-display {
+            font-size: 9px;
+            text-align: right;
+            color: #6680aa;
+            margin-top: 2px;
+            font-family: 'Fira Code', monospace;
+        }
+
+        /* action buttons */
+        .card-actions { display: flex; gap: 6px; margin-top: 10px; }
+        .btn-sm {
+            flex: 1;
+            background: rgba(60,80,140,0.6);
+            border: 1px solid rgba(100,140,255,0.3);
+            color: #c8d8ff;
+            padding: 5px 4px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 10px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            transition: background .2s, border-color .2s;
+            text-align: center;
+        }
+        .btn-sm:hover { background: rgba(80,110,200,0.7); border-color: #88aaff; }
+        .btn-sm.view-btn { background: rgba(30,90,60,0.6); border-color: rgba(76,175,80,0.4); color: #80e898; }
+        .btn-sm.view-btn:hover { background: rgba(50,130,80,0.7); border-color: #4caf50; }
+
+        /* comparison table */
+        .compare-table {
+            background: rgba(5,10,25,0.9);
+            border-radius: 10px;
+            padding: 10px;
+            border: 1px solid rgba(100,140,255,0.15);
+        }
+        .compare-table-title {
+            text-align: center;
+            font-size: 11px;
+            font-weight: 700;
+            color: #88aaff;
+            margin-bottom: 8px;
+            letter-spacing: .5px;
+        }
+        table { width: 100%; border-collapse: collapse; }
+        th, td {
+            padding: 5px 3px;
+            border-bottom: 1px solid rgba(100,140,255,0.1);
+            text-align: center;
+            font-size: 10px;
+        }
+        th { color: #8bc34a; font-weight: 600; font-size: 9px; letter-spacing: .5px; }
+        td:first-child { text-align: left; color: #94a3b8; }
+        .diff-cell { color: #ffaa55; font-family: 'Fira Code', monospace; }
+        .diff-pos  { color: #4caf50; }
+        .diff-neg  { color: #ef5350; }
+
+        .share-hint {
+            text-align: center;
+            font-size: 9px;
+            color: #4466aa;
+            padding: 4px;
+        }
+
+        /* ── Right: 3D viewer ── */
+        .viewer-panel {
+            flex: 1;
+            position: relative;
+            background: #0a0a1a;
+            overflow: hidden;
+        }
+        #threeCanvas {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+        }
+        .viewer-overlay {
+            position: absolute;
+            top: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.75);
+            border: 1px solid rgba(100,140,255,0.3);
+            border-radius: 20px;
+            padding: 4px 18px;
+            font-size: 12px;
+            font-family: 'Fira Code', monospace;
+            color: #4caf50;
+            z-index: 30;
+            pointer-events: none;
+            backdrop-filter: blur(6px);
+        }
+        .viewer-controls {
+            position: absolute;
+            bottom: 18px;
+            right: 18px;
+            display: flex;
+            gap: 8px;
+            z-index: 30;
+        }
+        .viewer-btn {
+            background: rgba(10,15,35,0.85);
+            border: 1px solid rgba(100,140,255,0.35);
+            color: #c8d8ff;
+            padding: 6px 14px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 11px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            transition: background .2s;
+            backdrop-filter: blur(6px);
+        }
+        .viewer-btn:hover { background: rgba(40,70,160,0.7); border-color: #88aaff; }
+        .viewer-btn.mesh-on { border-color: #4caf50; color: #4caf50; }
+
+        /* legend */
+        .legend {
+            position: absolute;
+            bottom: 18px;
+            left: 18px;
+            background: rgba(5,10,25,0.85);
+            border: 1px solid rgba(100,140,255,0.2);
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 10px;
+            z-index: 30;
+            pointer-events: none;
+            backdrop-filter: blur(6px);
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .leg-item { display: flex; align-items: center; gap: 6px; }
+        .leg-dot  { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+    </style>
+</head>
+<body>
+<div class="app-container">
+
+    <!-- ═══ LEFT: Comparison Panel ═══ -->
+    <div class="compare-panel">
+        <!-- Back Navigation -->
+        <div style="margin-bottom: 8px;">
+            <a href="index.html" class="btn-sm" style="text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 6px; background: rgba(30,45,69,.8); border: 1px solid rgba(100,140,255,0.3); color: #e2e8f0; padding: 6px 12px; border-radius: 20px; font-weight: 600; cursor: pointer; transition: background .2s, border-color .2s;">
+                <i class="fas fa-arrow-left" style="font-size: 10px;"></i> Back to Main Tool
+            </a>
+        </div>
+
+        <div class="panel-title">⚖️ Device Comparison</div>
+
+        <!-- Device A -->
+        <div id="cardA" class="device-card active">
+            <div class="card-header">
+                <h3>🔬 Device A</h3>
+                <span class="badge active-badge" id="badgeA">ACTIVE ●</span>
+            </div>
+            <div id="paramsA"></div>
+            <div class="card-actions">
+                <button class="btn-sm" id="copyAtoB">📋 Copy → B</button>
+                <button class="btn-sm view-btn" id="activateA">👁 View A</button>
+            </div>
+        </div>
+
+        <!-- Device B -->
+        <div id="cardB" class="device-card">
+            <div class="card-header">
+                <h3>⚙️ Device B</h3>
+                <span class="badge" id="badgeB">inactive</span>
+            </div>
+            <div id="paramsB"></div>
+            <div class="card-actions">
+                <button class="btn-sm" id="copyBtoA">📋 Copy → A</button>
+                <button class="btn-sm view-btn" id="activateB">👁 View B</button>
+            </div>
+        </div>
+
+        <!-- Comparison table -->
+        <div class="compare-table">
+            <div class="compare-table-title">📊 SNN Performance</div>
+            <table>
+                <thead>
+                    <tr><th>Metric</th><th>Dev A</th><th>Dev B</th><th>Δ B–A</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>Accuracy (%)</td>  <td id="accA">–</td>  <td id="accB">–</td>  <td id="dAcc"  class="diff-cell">–</td></tr>
+                    <tr><td>Energy (fJ)</td>   <td id="engA">–</td>  <td id="engB">–</td>  <td id="dEng"  class="diff-cell">–</td></tr>
+                    <tr><td>Latency (ms)</td>  <td id="latA">–</td>  <td id="latB">–</td>  <td id="dLat"  class="diff-cell">–</td></tr>
+                    <tr><td>Vth (V)</td>       <td id="vthA">–</td>  <td id="vthB">–</td>  <td id="dVth"  class="diff-cell">–</td></tr>
+                    <tr><td>Ion (µA/µm)</td>   <td id="ionA">–</td>  <td id="ionB">–</td>  <td id="dIon"  class="diff-cell">–</td></tr>
+                    <tr><td>SS (mV/dec)</td>   <td id="ssA">–</td>   <td id="ssB">–</td>   <td id="dSS"   class="diff-cell">–</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="share-hint">🔗 URL hash encodes both device states</div>
+    </div>
+
+    <!-- ═══ RIGHT: 3D TCAD Viewer ═══ -->
+    <div class="viewer-panel">
+        <div class="viewer-overlay" id="viewingStatus">👁 Viewing: Device A</div>
+
+        <div id="threeCanvas"></div>
+
+        <!-- legend -->
+        <div class="legend">
+            <div class="leg-item"><div class="leg-dot" style="background:#3a86ff;opacity:.7;"></div>Metal Gate</div>
+            <div class="leg-item"><div class="leg-dot" style="background:#FFAA44;opacity:.7;"></div>High-k Oxide</div>
+            <div class="leg-item"><div class="leg-dot" style="background:#CCCCCC;"></div>Si Nanosheet</div>
+            <div class="leg-item"><div class="leg-dot" style="background:#ff8844;"></div>Source / Drain</div>
+            <div class="leg-item"><div class="leg-dot" style="background:#8B4513;opacity:.8;"></div>Substrate</div>
+        </div>
+
+        <div class="viewer-controls">
+            <button class="viewer-btn" id="toggleMeshBtn">🔲 Show Mesh</button>
+            <button class="viewer-btn" id="resetViewBtn">🎥 Reset View</button>
+        </div>
+    </div>
+</div>
+
+<!-- Three.js import map -->
+<script type="importmap">
+{
+    "imports": {
+        "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/"
+    }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls }    from 'three/addons/controls/OrbitControls.js';
+import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+
+// ═══════════════════════════════════════════════════════
+//  PARAMETER DEFINITIONS  (mirrors main page)
+// ═══════════════════════════════════════════════════════
+const paramDefs = [
+    { id:'Lg',      label:'Gate Length (nm)',        min:8,    max:50,   step:1,    default:12,   unit:'nm' },
+    { id:'Wns',     label:'Nanosheet Width (nm)',     min:10,   max:60,   step:1,    default:25,   unit:'nm' },
+    { id:'Tns',     label:'Nanosheet Thickness (nm)',min:3,    max:10,   step:0.5,  default:5,    unit:'nm' },
+    { id:'Nstacks', label:'Number of Stacks',         min:1,    max:5,    step:1,    default:3,    unit:'' },
+    { id:'Nd',      label:'Channel Doping (cm⁻³)',    min:1e15, max:1e19, step:1e17, default:1e16, unit:'', log:true },
+    { id:'Dtype',   label:'Device Type', type:'select', options:['n','p'], default:'n', unit:'' }
+];
+
+// ═══════════════════════════════════════════════════════
+//  PHYSICS  (lightweight surrogate matching main page)
+// ═══════════════════════════════════════════════════════
+function predictSNN(p) {
+    const { Lg, Wns, Tns, Nstacks, Nd, Dtype } = p;
+    const Weff = Nstacks * 2 * (Wns + Tns);           // nm
+
+    let Vth = 0.30 + 0.02*(Wns-20)/10 - 0.01*(Tns-5) + (Lg/12 - 1)*0.24;
+    Vth = Math.max(0.2, Math.min(0.5, Vth));
+
+    let SS = 60 + 1.2 * Math.pow((Lg-12)/12, 2);
+    SS = Math.max(60, Math.min(100, SS));
+
+    const Cox   = 34.5 / 0.8;                          // fF/µm²  (EOT≈0.8)
+    const mu    = 200 / (1 + 1.2 * Math.pow(5/Tns, 2));
+    const muSI  = mu * 1e-4;
+    const Wm    = Weff * 1e-9;
+    const Lm    = Lg  * 1e-9;
+    const Cox_Fm2 = Cox * 1e-3;
+    const beta  = muSI * Cox_Fm2 * (Wm / Lm);
+    const Vov   = Math.max(0.7 - Vth, 1e-4);
+    const Ion_A = beta * Vov * Vov / (1 + Vov / (1e7 * Lm));
+    const Ion   = Ion_A * 1e6 / (Weff * 1e-6);        // µA/µm
+    const VthEff = Math.max(Vth - 30 * 0.7 / 1000, 0.05);
+    const Ioff  = 1.5e-7 * (Weff / Lg) * Math.pow(10, -VthEff / (SS * 1e-3)) * 1e12 / (Weff * 1e-6); // pA/µm
+
+    // SNN metrics (same coefficients as main page)
+    const Ion_mA = Ion_A * 1e3;
+    const Ioff_pA = Ioff;
+    let E = 0.8 + 4.5*Ion_mA + 0.001*Ioff_pA + 0.005*SS + 0.003*25;
+    E = Math.max(0.01, E);
+    let L = 1.2 - 41.3*Ion_mA + 0.014*Ioff_pA + 0.167*SS + 0.01*25;
+    L = Math.max(0.5, L);
+    let A = 58.6 + 193.4*Ion_mA - 0.077*Ioff_pA - 0.075*SS - 0.05*25;
+    A = Math.max(50, Math.min(98, A));
+
+    return { Vth, SS, Ion, Ioff, E, L, A };
+}
+
+// ═══════════════════════════════════════════════════════
+//  BUILD SLIDER UI
+// ═══════════════════════════════════════════════════════
+let deviceParams = { A:{}, B:{} };
+let devicePreds  = { A:{}, B:{} };
+let activeDevice = 'A';
+
+function buildControls(containerId, devId, onUpdate) {
+    const wrap = document.getElementById(containerId);
+    wrap.innerHTML = '';
+    paramDefs.forEach(def => {
+        const grp = document.createElement('div');
+        grp.className = 'control-group';
+        const lbl = document.createElement('label');
+        lbl.textContent = def.label;
+        grp.appendChild(lbl);
+
+        let input;
+        if (def.type === 'select') {
+            input = document.createElement('select');
+            def.options.forEach(opt => {
+                const o = document.createElement('option');
+                o.value = opt; o.textContent = opt === 'n' ? 'n-type (NFET)' : 'p-type (PFET)';
+                input.appendChild(o);
+            });
+        } else {
+            input = document.createElement('input');
+            input.type = 'range';
+            if (def.log) {
+                input.min  = Math.log10(def.min);
+                input.max  = Math.log10(def.max);
+                input.step = 0.05;
+                input.value = Math.log10(def.default);
+            } else {
+                input.min   = def.min;
+                input.max   = def.max;
+                input.step  = def.step;
+                input.value = def.default;
+            }
+        }
+
+        const disp = document.createElement('div');
+        disp.className = 'value-display';
+        grp.appendChild(input);
+        grp.appendChild(disp);
+        wrap.appendChild(grp);
+
+        const refresh = () => {
+            let real = def.type === 'select' ? input.value
+                     : def.log ? Math.pow(10, parseFloat(input.value))
+                     : parseFloat(input.value);
+            disp.textContent = def.type === 'select' ? real
+                : def.log ? real.toExponential(2) + ' cm⁻³'
+                : real.toFixed(1) + (def.unit ? ' ' + def.unit : '');
+            deviceParams[devId][def.id] = def.type === 'select' ? input.value
+                : def.log ? Math.pow(10, parseFloat(input.value))
+                : parseFloat(input.value);
+            onUpdate(devId);
+        };
+        input.addEventListener('input', refresh);
+        refresh();
+    });
+}
+
+function onDeviceUpdate(devId) {
+    const pred = predictSNN(deviceParams[devId]);
+    devicePreds[devId] = pred;
+    updateTable();
+    if (activeDevice === devId) rebuild3D(deviceParams[devId]);
+}
+
+// ═══════════════════════════════════════════════════════
+//  COMPARISON TABLE
+// ═══════════════════════════════════════════════════════
+function fmtDiff(val, id, higherIsBetter) {
+    const el = document.getElementById(id);
+    if (val === null) { el.textContent = '–'; el.className = 'diff-cell'; return; }
+    const sign = val > 0 ? '+' : '';
+    el.textContent = sign + val.toFixed(2);
+    if (Math.abs(val) < 0.005) { el.className = 'diff-cell'; return; }
+    const positive = higherIsBetter ? val > 0 : val < 0;
+    el.className = 'diff-cell ' + (positive ? 'diff-pos' : 'diff-neg');
+}
+
+function updateTable() {
+    const pA = devicePreds.A, pB = devicePreds.B;
+    const fill = (id, v) => { document.getElementById(id).textContent = v !== undefined ? v : '–'; };
+    fill('accA', pA.A?.toFixed(1)); fill('accB', pB.A?.toFixed(1));
+    fill('engA', pA.E?.toFixed(2)); fill('engB', pB.E?.toFixed(2));
+    fill('latA', pA.L?.toFixed(2)); fill('latB', pB.L?.toFixed(2));
+    fill('vthA', pA.Vth?.toFixed(3)); fill('vthB', pB.Vth?.toFixed(3));
+    fill('ionA', pA.Ion?.toFixed(1)); fill('ionB', pB.Ion?.toFixed(1));
+    fill('ssA',  pA.SS?.toFixed(1));  fill('ssB',  pB.SS?.toFixed(1));
+
+    // Properly named cells
+    document.getElementById('accA').textContent = pA.A !== undefined ? pA.A.toFixed(1) : '–';
+    document.getElementById('accB').textContent = pB.A !== undefined ? pB.A.toFixed(1) : '–';
+    document.getElementById('engA').textContent = pA.E !== undefined ? pA.E.toFixed(2) : '–';
+    document.getElementById('engB').textContent = pB.E !== undefined ? pB.E.toFixed(2) : '–';
+    document.getElementById('latA').textContent = pA.L !== undefined ? pA.L.toFixed(2) : '–';
+    document.getElementById('latB').textContent = pB.L !== undefined ? pB.L.toFixed(2) : '–';
+    document.getElementById('vthA').textContent = pA.Vth !== undefined ? pA.Vth.toFixed(3) : '–';
+    document.getElementById('vthB').textContent = pB.Vth !== undefined ? pB.Vth.toFixed(3) : '–';
+    document.getElementById('ionA').textContent = pA.Ion !== undefined ? pA.Ion.toFixed(1) : '–';
+    document.getElementById('ionB').textContent = pB.Ion !== undefined ? pB.Ion.toFixed(1) : '–';
+    document.getElementById('ssA').textContent  = pA.SS !== undefined  ? pA.SS.toFixed(1)  : '–';
+    document.getElementById('ssB').textContent  = pB.SS !== undefined  ? pB.SS.toFixed(1)  : '–';
+
+    if (pA.A !== undefined && pB.A !== undefined) {
+        fmtDiff(pB.A  - pA.A,   'dAcc', true);
+        fmtDiff(pB.E  - pA.E,   'dEng', false);
+        fmtDiff(pB.L  - pA.L,   'dLat', false);
+        fmtDiff(pB.Vth- pA.Vth, 'dVth', false);
+        fmtDiff(pB.Ion- pA.Ion, 'dIon', true);
+        fmtDiff(pB.SS - pA.SS,  'dSS',  false);
+    }
+}
+
+// ═══════════════════════════════════════════════════════
+//  COPY PARAMS
+// ═══════════════════════════════════════════════════════
+function copyParams(src, dst) {
+    const srcP = deviceParams[src];
+    const cid  = dst === 'A' ? 'paramsA' : 'paramsB';
+    const inputs = document.getElementById(cid).querySelectorAll('input, select');
+    let idx = 0;
+    paramDefs.forEach(def => {
+        const inp = inputs[idx++];
+        let val = srcP[def.id];
+        if (def.log && typeof val === 'number') val = Math.log10(val);
+        inp.value = val;
+        inp.dispatchEvent(new Event('input'));
+    });
+}
+
+// ═══════════════════════════════════════════════════════
+//  THREE.JS TCAD 3D VIEWER  (identical to index.html)
+// ═══════════════════════════════════════════════════════
+const container = document.getElementById('threeCanvas');
+const viewerPanel = document.querySelector('.viewer-panel');
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0a0a1a);
+scene.fog = new THREE.FogExp2(0x0a0a1a, 0.004);
+
+const W0 = viewerPanel.clientWidth  || (window.innerWidth - 310);
+const H0 = viewerPanel.clientHeight || window.innerHeight;
+
+const camera = new THREE.PerspectiveCamera(45, W0 / H0, 0.1, 1000);
+camera.position.set(5, 4.5, 8);
+camera.lookAt(0, 0.5, 0);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(W0, H0);
+renderer.setPixelRatio(window.devicePixelRatio);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+container.appendChild(renderer.domElement);
+
+const labelRenderer = new CSS2DRenderer();
+labelRenderer.setSize(W0, H0);
+labelRenderer.domElement.style.position = 'absolute';
+labelRenderer.domElement.style.top  = '0px';
+labelRenderer.domElement.style.left = '0px';
+labelRenderer.domElement.style.pointerEvents = 'none';
+viewerPanel.appendChild(labelRenderer.domElement);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping  = true;
+controls.dampingFactor  = 0.05;
+controls.enableZoom     = true;
+controls.enablePan      = true;
+
+// Lights
+scene.add(new THREE.AmbientLight(0x404060, 1.0));
+const mainLight = new THREE.DirectionalLight(0xffffff, 1.2);
+mainLight.position.set(2, 5, 3);
+mainLight.castShadow = true;
+mainLight.shadow.mapSize.width  = 1024;
+mainLight.shadow.mapSize.height = 1024;
+scene.add(mainLight);
+const fillLight = new THREE.PointLight(0x6688ff, 0.5);
+fillLight.position.set(-1, 2, 2);
+scene.add(fillLight);
+const backLight = new THREE.PointLight(0xffaa66, 0.4);
+backLight.position.set(0, 1.5, -2);
+scene.add(backLight);
+scene.add(new THREE.PointLight(0xffaa88, 0.3)).position.set(1, 1, -1.5);
+
+const gridHelper = new THREE.GridHelper(12, 20, 0x88aaff, 0x335588);
+gridHelper.position.y = -1.2;
+scene.add(gridHelper);
+
+let deviceGroup = null;
+let meshGroup   = null;
+let labelGroup  = null;
+let showMesh    = false;
+
+// — Label helper (same as index.html) —
+function createLabel(text, color, position, fontSize='12px') {
+    const div = document.createElement('div');
+    div.textContent = text;
+    div.style.color           = color;
+    div.style.fontSize        = fontSize;
+    div.style.fontWeight      = 'bold';
+    div.style.backgroundColor = 'rgba(0,0,0,0.7)';
+    div.style.padding         = '2px 6px';
+    div.style.borderRadius    = '12px';
+    div.style.border          = `1px solid ${color}`;
+    div.style.fontFamily      = 'monospace';
+    div.style.backdropFilter  = 'blur(4px)';
+    const label = new CSS2DObject(div);
+    label.position.copy(position);
+    return label;
+}
+
+// — TCAD mesh overlay (same as index.html) —
+function addTCADMesh(bounds) {
+    const grp = new THREE.Group();
+    const { minX, maxX, minY, maxY, minZ, maxZ } = bounds;
+    const width  = maxX - minX;
+    const height = maxY - minY;
+    const depth  = maxZ - minZ;
+
+    const boxEdges = new THREE.EdgesGeometry(new THREE.BoxGeometry(width, height, depth));
+    const boxWire  = new THREE.LineSegments(boxEdges, new THREE.LineBasicMaterial({ color: 0x88aaff, linewidth: 2 }));
+    boxWire.position.set(minX+width/2, minY+height/2, minZ+depth/2);
+    grp.add(boxWire);
+
+    const step    = 0.4;
+    const lineMat = new THREE.LineBasicMaterial({ color: 0x66aaff });
+    for (let y = minY; y <= maxY+0.01; y += step) {
+        for (let z = minZ; z <= maxZ+0.01; z += step) {
+            const g = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(minX,y,z), new THREE.Vector3(maxX,y,z)]);
+            grp.add(new THREE.Line(g, lineMat));
+        }
+    }
+    for (let x = minX; x <= maxX+0.01; x += step) {
+        for (let z = minZ; z <= maxZ+0.01; z += step) {
+            const g = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(x,minY,z), new THREE.Vector3(x,maxY,z)]);
+            grp.add(new THREE.Line(g, lineMat));
+        }
+    }
+    for (let x = minX; x <= maxX+0.01; x += step) {
+        for (let y = minY; y <= maxY+0.01; y += step) {
+            const g = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(x,y,minZ), new THREE.Vector3(x,y,maxZ)]);
+            grp.add(new THREE.Line(g, lineMat));
+        }
+    }
+    const sphereMat = new THREE.MeshStandardMaterial({ color:0xff8888, emissive:0x441111 });
+    for (let x = minX; x <= maxX+0.01; x += step)
+        for (let y = minY; y <= maxY+0.01; y += step)
+            for (let z = minZ; z <= maxZ+0.01; z += step) {
+                const sp = new THREE.Mesh(new THREE.SphereGeometry(0.045, 8, 8), sphereMat);
+                sp.position.set(x, y, z);
+                grp.add(sp);
+            }
+    return grp;
+}
+
+// — Main rebuild (exact copy of index.html's update3DModel) —
+function rebuild3D(params) {
+    if (!params || !params.Lg) return;
+    if (deviceGroup) scene.remove(deviceGroup);
+    if (labelGroup)  scene.remove(labelGroup);
+    deviceGroup = new THREE.Group();
+    labelGroup  = new THREE.Group();
+
+    const Lg      = params.Lg      / 10;
+    const Wns     = params.Wns     / 10;
+    const Tns     = params.Tns     / 10;
+    const Nstacks = params.Nstacks;
+    const NSD     = 1.0;  // full S/D intensity
+
+    // Substrate texture (same as index.html)
+    const canvasTex = document.createElement('canvas');
+    canvasTex.width = canvasTex.height = 512;
+    const ctxT = canvasTex.getContext('2d');
+    ctxT.fillStyle = '#8B4513'; ctxT.fillRect(0, 0, 512, 512);
+    ctxT.strokeStyle = '#D2B48C'; ctxT.lineWidth = 2;
+    for (let i = 0; i < 512; i += 32) {
+        ctxT.beginPath(); ctxT.moveTo(i, 0); ctxT.lineTo(i, 512); ctxT.stroke();
+        ctxT.beginPath(); ctxT.moveTo(0, i); ctxT.lineTo(512, i); ctxT.stroke();
+    }
+    const substrateMat = new THREE.MeshStandardMaterial({ map: new THREE.CanvasTexture(canvasTex), roughness:0.7, metalness:0.1 });
+    const substrate    = new THREE.Mesh(new THREE.BoxGeometry(Wns+0.8, 0.3, Lg+0.8), substrateMat);
+    substrate.position.y = -0.7;
+    substrate.receiveShadow = substrate.castShadow = true;
+    deviceGroup.add(substrate);
+
+    // Materials (same as index.html)
+    const sheetMat  = new THREE.MeshStandardMaterial({ color:0xCCCCCC, roughness:0.2, metalness:0.6 });
+    const highKMat  = new THREE.MeshStandardMaterial({ color:0xFFAA44, transparent:true, opacity:0.4, emissive:0x442200 });
+    const gateMat   = new THREE.MeshStandardMaterial({ color:0x3a86ff, metalness:0.95, roughness:0.25, transparent:true, opacity:0.65 });
+    const spacerMat = new THREE.MeshStandardMaterial({ color:0x444444, metalness:0.3, roughness:0.4 });
+    const sdColor   = new THREE.Color().setHSL(0.05, 1, 0.5*(0.7 + Math.min(1,NSD)*0.3));
+    const sdMat     = new THREE.MeshStandardMaterial({ color:sdColor, metalness:0.9, roughness:0.2, emissive:0x331100 });
+
+    const sheetHeight = Tns;
+    const spacing     = 0.4;
+    const startY      = -0.2;
+
+    let minX = -Wns/2 - 0.5, maxX = Wns/2 + 0.5;
+    let minY = startY - 0.3, maxY = startY + Nstacks*(sheetHeight+spacing) - spacing + 0.3;
+    let minZ = -Lg/2 - 0.5, maxZ = Lg/2 + 0.5;
+
+    for (let i = 0; i < Nstacks; i++) {
+        const y = startY + i*(sheetHeight + spacing);
+
+        const sheet = new THREE.Mesh(new THREE.BoxGeometry(Wns, sheetHeight, Lg), sheetMat);
+        sheet.position.y = y; sheet.castShadow = true;
+        deviceGroup.add(sheet);
+
+        const highK = new THREE.Mesh(new THREE.BoxGeometry(Wns+0.06, sheetHeight+0.06, Lg+0.06), highKMat);
+        highK.position.y = y;
+        deviceGroup.add(highK);
+
+        const gate = new THREE.Mesh(new THREE.BoxGeometry(Wns+0.14, sheetHeight+0.14, Lg+0.14), gateMat);
+        gate.position.y = y; gate.castShadow = true;
+        deviceGroup.add(gate);
+
+        if (i < Nstacks - 1) {
+            const spacer = new THREE.Mesh(new THREE.BoxGeometry(0.2, spacing, 0.35), spacerMat);
+            spacer.position.set(0, y + sheetHeight + spacing/2, 0);
+            deviceGroup.add(spacer);
+        }
+
+        // Source & Drain (same geometry as index.html)
+        const sdW = 0.25, sdH = sheetHeight*0.85, sdL = 0.6;
+        const src = new THREE.Mesh(new THREE.BoxGeometry(sdW, sdH, sdL), sdMat);
+        const drn = new THREE.Mesh(new THREE.BoxGeometry(sdW, sdH, sdL), sdMat);
+        src.position.set(-Wns/2 - 0.3, y + sheetHeight/2,  Lg/2 + 0.4);
+        drn.position.set( Wns/2 + 0.3, y + sheetHeight/2,  Lg/2 + 0.4);
+        src.castShadow = drn.castShadow = true;
+        deviceGroup.add(src, drn);
+    }
+
+    // Labels
+    const labelY = startY + Nstacks*(sheetHeight+spacing) + 0.4;
+    labelGroup.add(
+        createLabel(`Lg = ${params.Lg} nm`,      '#88aaff', new THREE.Vector3(0,       labelY,      Lg/2+0.8), '12px'),
+        createLabel(`Wns = ${params.Wns} nm`,    '#88aaff', new THREE.Vector3(Wns/2+0.9, labelY,    0),        '12px'),
+        createLabel(`Tns = ${params.Tns} nm`,    '#88aaff', new THREE.Vector3(0,       labelY-0.3, -Lg/2-0.9),'12px'),
+        createLabel(`Stacks = ${Nstacks}`,        '#88aaff', new THREE.Vector3(-Wns/2-1.0, labelY-0.2, 0),   '12px'),
+        createLabel('Source', '#ff8888', new THREE.Vector3(-Wns/2-0.7, 0.2, Lg/2+0.5), '10px'),
+        createLabel('Drain',  '#ff8888', new THREE.Vector3( Wns/2+0.7, 0.2, Lg/2+0.5), '10px'),
+        createLabel('Gate',   '#88aaff', new THREE.Vector3(0, maxY+0.2, 0),             '10px'),
+        createLabel('Substrate', '#ccaa88', new THREE.Vector3(0, -0.9, 0),              '10px')
+    );
+
+    scene.add(deviceGroup, labelGroup);
+
+    // Mesh overlay
+    if (meshGroup) scene.remove(meshGroup);
+    if (showMesh) {
+        meshGroup = addTCADMesh({ minX, maxX, minY, maxY, minZ, maxZ });
+        scene.add(meshGroup);
+    }
+}
+
+// — Animate —
+function animate() {
+    requestAnimationFrame(animate);
+    controls.update();
+    renderer.render(scene, camera);
+    labelRenderer.render(scene, camera);
+}
+animate();
+
+// — Resize —
+const ro = new ResizeObserver(() => {
+    const w = viewerPanel.clientWidth, h = viewerPanel.clientHeight;
+    if (!w || !h) return;
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+    renderer.setSize(w, h);
+    labelRenderer.setSize(w, h);
+});
+ro.observe(viewerPanel);
+
+// ═══════════════════════════════════════════════════════
+//  UI EVENT BINDING
+// ═══════════════════════════════════════════════════════
+function setActiveDevice(id) {
+    activeDevice = id;
+    document.getElementById('viewingStatus').textContent = `👁 Viewing: Device ${id}`;
+    document.getElementById('cardA').classList.toggle('active', id === 'A');
+    document.getElementById('cardB').classList.toggle('active', id === 'B');
+    document.getElementById('badgeA').textContent = id === 'A' ? 'ACTIVE ●' : 'inactive';
+    document.getElementById('badgeA').className   = 'badge' + (id === 'A' ? ' active-badge' : '');
+    document.getElementById('badgeB').textContent = id === 'B' ? 'ACTIVE ●' : 'inactive';
+    document.getElementById('badgeB').className   = 'badge' + (id === 'B' ? ' active-badge' : '');
+    rebuild3D(deviceParams[id]);
+}
+
+document.getElementById('activateA').addEventListener('click', () => setActiveDevice('A'));
+document.getElementById('activateB').addEventListener('click', () => setActiveDevice('B'));
+document.getElementById('copyAtoB').addEventListener('click', () => copyParams('A','B'));
+document.getElementById('copyBtoA').addEventListener('click', () => copyParams('B','A'));
+
+document.getElementById('toggleMeshBtn').addEventListener('click', function() {
+    showMesh = !showMesh;
+    this.textContent = showMesh ? '🔳 Hide Mesh' : '🔲 Show Mesh';
+    this.classList.toggle('mesh-on', showMesh);
+    if (meshGroup) scene.remove(meshGroup);
+    if (showMesh && deviceParams[activeDevice].Lg) {
+        const p = deviceParams[activeDevice];
+        const Lg = p.Lg/10, Wns = p.Wns/10, Tns = p.Tns/10, N = p.Nstacks;
+        const s = 0.4, sY = -0.2, sH = Tns;
+        meshGroup = addTCADMesh({
+            minX: -Wns/2-0.5, maxX: Wns/2+0.5,
+            minY: sY-0.3,     maxY: sY+N*(sH+s)-s+0.3,
+            minZ: -Lg/2-0.5,  maxZ: Lg/2+0.5
+        });
+        scene.add(meshGroup);
+    }
+});
+
+document.getElementById('resetViewBtn').addEventListener('click', () => {
+    camera.position.set(5, 4.5, 8);
+    controls.target.set(0, 0.5, 0);
+    controls.update();
+});
+
+// ═══════════════════════════════════════════════════════
+//  SHAREABLE URL
+// ═══════════════════════════════════════════════════════
+function loadFromHash() {
+    const hash = window.location.hash.substring(1);
+    if (!hash) return;
+    try {
+        const state = JSON.parse(atob(hash));
+        if (state.A) applyState('A', state.A);
+        if (state.B) applyState('B', state.B);
+        if (state.active) setActiveDevice(state.active);
+    } catch(e) {}
+}
+function applyState(devId, params) {
+    const cid = devId === 'A' ? 'paramsA' : 'paramsB';
+    const inputs = document.getElementById(cid).querySelectorAll('input, select');
+    let idx = 0;
+    paramDefs.forEach(def => {
+        if (params[def.id] !== undefined) {
+            let val = params[def.id];
+            if (def.log && typeof val === 'number') val = Math.log10(val);
+            inputs[idx].value = val;
+            inputs[idx].dispatchEvent(new Event('input'));
+        }
+        idx++;
+    });
+}
+window.addEventListener('hashchange', loadFromHash);
+
+// ═══════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════
+buildControls('paramsA', 'A', onDeviceUpdate);
+buildControls('paramsB', 'B', onDeviceUpdate);
+loadFromHash();
+
+// Trigger initial 3D draw after sliders settle
+setTimeout(() => {
+    if (deviceParams.A.Lg) rebuild3D(deviceParams.A);
+}, 150);
+</script>
+</body>
+</html>

@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>FET2SNN – Educational Animations: Nanosheet to SNN</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            background: #0a0f1a;
+            font-family: 'Segoe UI', 'Roboto', system-ui, sans-serif;
+            margin: 0;
+            padding: 20px;
+            color: #e0e0e0;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        h1 {
+            font-weight: 400;
+            border-bottom: 1px solid #2a4a6a;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+        .sub {
+            color: #8bc34a;
+            margin-bottom: 30px;
+        }
+        .cards-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 25px;
+            justify-content: center;
+        }
+        .card {
+            flex: 1;
+            min-width: 400px;
+            background: #11161f;
+            border-radius: 24px;
+            padding: 20px;
+            border: 1px solid #2a4a6a;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+            transition: transform 0.2s;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            border-color: #4caf50;
+        }
+        .card h2 {
+            margin-top: 0;
+            font-size: 1.4rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .card h2 span {
+            font-size: 1.8rem;
+        }
+        .canvas-container {
+            background: #0a0f1a;
+            border-radius: 16px;
+            padding: 15px;
+            margin: 15px 0;
+            border: 1px solid #2a4a6a;
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: auto;
+            background: #050b1a;
+            border-radius: 12px;
+            cursor: pointer;
+        }
+        .controls {
+            display: flex;
+            gap: 12px;
+            margin: 15px 0;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        button {
+            background: #2c5a7a;
+            border: none;
+            color: white;
+            padding: 6px 16px;
+            border-radius: 40px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: 0.2s;
+        }
+        button:hover {
+            background: #1e4a6a;
+        }
+        .speed-control {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #0e1422;
+            padding: 4px 12px;
+            border-radius: 40px;
+        }
+        input[type="range"] {
+            width: 100px;
+            height: 3px;
+            background: #2a4a6a;
+        }
+        .description {
+            font-size: 13px;
+            line-height: 1.5;
+            color: #bbb;
+            margin-top: 15px;
+            border-top: 1px solid #2a4a6a;
+            padding-top: 12px;
+        }
+        .badge {
+            background: #1e2a36;
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            display: inline-block;
+            margin-right: 10px;
+        }
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 11px;
+            opacity: 0.6;
+        }
+        @media (max-width: 900px) {
+            .cards-container { flex-direction: column; align-items: center; }
+            .card { min-width: auto; width: 100%; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🧠 From Nanosheets to SNNs</h1>
+    <div class="sub">Interactive educational animations – biological inspiration vs. hardware implementation</div>
+    
+    <div class="cards-container">
+        <!-- Biological Neural Network Card -->
+        <div class="card">
+            <h2><span>🧬</span> Biological Neural Network</h2>
+            <div class="canvas-container">
+                <canvas id="bioCanvas" width="600" height="300" style="width:100%; height:auto; max-width:600px; margin:0 auto; display:block;"></canvas>
+            </div>
+            <div class="controls">
+                <button id="bioPlayPause">⏸️ Pause</button>
+                <button id="bioReset">🔄 Reset</button>
+                <div class="speed-control">
+                    <span>🐢</span>
+                    <input type="range" id="bioSpeed" min="0.5" max="3" step="0.1" value="1">
+                    <span>🐇</span>
+                </div>
+            </div>
+            <div class="description">
+                <span class="badge">Action Potential</span> Electric impulses (glowing particles) travel along the <strong>pre‑synaptic axon</strong>, cross the <strong>synaptic cleft</strong> via neurotransmitters, and excite the <strong>post‑synaptic dendrite</strong>. This spike‑based communication inspired spiking neural networks (SNNs).
+            </div>
+        </div>
+        
+        <!-- Transistor to Neural Hardware Card -->
+        <div class="card">
+            <h2><span>⚡</span> Transistor → Neural Hardware</h2>
+            <div class="canvas-container">
+                <canvas id="neuromorphicCanvas" width="600" height="300" style="width:100%; height:auto; max-width:600px; margin:0 auto; display:block;"></canvas>
+            </div>
+            <div class="controls">
+                <button id="neuPlayPause">⏸️ Pause</button>
+                <button id="neuReset">🔄 Reset</button>
+                <div class="speed-control">
+                    <span>🐢</span>
+                    <input type="range" id="neuSpeed" min="0.5" max="3" step="0.1" value="1">
+                    <span>🐇</span>
+                </div>
+            </div>
+            <div class="description">
+                <span class="badge">GAA Transistor</span> <strong>Charge carriers (electrons)</strong> flow through the nanosheet gate stack (input weight). They accumulate in the <strong>LIF neuron block</strong> – when threshold is reached, a spike (output) is generated. This mimics a biological synapse.
+            </div>
+        </div>
+    </div>
+    <footer>
+        💡 Each animation reflects the current device parameters from your FET2SNN tool (temperature, gate length, doping). Speed controls affect the learning pace.
+    </footer>
+</div>
+
+<script>
+    // ========== Biological Neuron Animation ==========
+    const bioCanvas = document.getElementById('bioCanvas');
+    const bioCtx = bioCanvas.getContext('2d');
+    bioCanvas.width = 600;
+    bioCanvas.height = 300;
+    
+    // Positions for biological diagram
+    const bio = {
+        preSynapse: { x: 120, y: 150 },   // pre-synaptic bulb
+        cleftStart: { x: 280, y: 150 },    // start of synaptic cleft
+        cleftEnd: { x: 320, y: 150 },      // end of synaptic cleft
+        postSynapse: { x: 480, y: 150 },   // post-synaptic dendrite
+        particles: [],
+        lastTimestamp: 0,
+        animationId: null,
+        isPlaying: true,
+        speed: 1.0
+    };
+    
+    // Particle system for action potentials
+    class BioParticle {
+        constructor(startX, startY, endX, endY) {
+            this.startX = startX;
+            this.startY = startY;
+            this.endX = endX;
+            this.endY = endY;
+            this.progress = 0; // 0 to 1
+            this.speed = 0.008; // base speed per frame (modified by global speed)
+            this.active = true;
+        }
+        update(speedFactor) {
+            if (!this.active) return;
+            this.progress += this.speed * speedFactor;
+            if (this.progress >= 1) {
+                this.active = false;
+            }
+        }
+        getCurrentPos() {
+            const t = this.progress;
+            const x = this.startX + (this.endX - this.startX) * t;
+            const y = this.startY + (this.endY - this.startY) * t;
+            return { x, y };
+        }
+        draw(ctx) {
+            if (!this.active) return;
+            const pos = this.getCurrentPos();
+            ctx.beginPath();
+            const radius = 6 * (1 - this.progress * 0.5);
+            const gradient = ctx.createRadialGradient(pos.x, pos.y, 2, pos.x, pos.y, radius);
+            gradient.addColorStop(0, '#ffcc44');
+            gradient.addColorStop(1, '#ff6600');
+            ctx.fillStyle = gradient;
+            ctx.arc(pos.x, pos.y, radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = '#ffaa44';
+            ctx.fill();
+            ctx.shadowBlur = 0;
+        }
+    }
+    
+    let bioParticles = [];
+    let lastBioSpawn = 0;
+    
+    function spawnBioParticle() {
+        // start from pre-synaptic axon terminal, go to post-synaptic dendrite
+        const start = { x: bio.preSynapse.x + 20, y: bio.preSynapse.y - 5 };
+        const end = { x: bio.postSynapse.x - 20, y: bio.postSynapse.y - 5 };
+        bioParticles.push(new BioParticle(start.x, start.y, end.x, end.y));
+        // occasionally add a second particle
+        if (Math.random() > 0.7) {
+            const start2 = { x: bio.preSynapse.x + 25, y: bio.preSynapse.y + 8 };
+            bioParticles.push(new BioParticle(start2.x, start2.y, end.x, end.y));
+        }
+    }
+    
+    function drawBiologicalDiagram() {
+        bioCtx.clearRect(0, 0, bioCanvas.width, bioCanvas.height);
+        
+        // Background gradient
+        const grad = bioCtx.createLinearGradient(0, 0, 0, bioCanvas.height);
+        grad.addColorStop(0, '#0a0f1a');
+        grad.addColorStop(1, '#11161f');
+        bioCtx.fillStyle = grad;
+        bioCtx.fillRect(0, 0, bioCanvas.width, bioCanvas.height);
+        
+        // Draw pre-synaptic axon (curved line from left)
+        bioCtx.beginPath();
+        bioCtx.moveTo(20, 150);
+        bioCtx.quadraticCurveTo(60, 120, bio.preSynapse.x - 10, bio.preSynapse.y);
+        bioCtx.strokeStyle = '#88aacc';
+        bioCtx.lineWidth = 4;
+        bioCtx.stroke();
+        // pre-synaptic bulb
+        bioCtx.fillStyle = '#2a5a7a';
+        bioCtx.shadowBlur = 0;
+        bioCtx.beginPath();
+        bioCtx.ellipse(bio.preSynapse.x, bio.preSynapse.y, 25, 18, 0, 0, Math.PI * 2);
+        bioCtx.fill();
+        bioCtx.fillStyle = '#4caf50';
+        bioCtx.font = 'bold 12px "Segoe UI"';
+        bioCtx.fillText("Pre‑synaptic", bio.preSynapse.x - 40, bio.preSynapse.y - 15);
+        
+        // Synaptic cleft (gap)
+        bioCtx.fillStyle = '#1e2a36';
+        bioCtx.fillRect(bio.cleftStart.x, bio.cleftStart.y - 15, bio.cleftEnd.x - bio.cleftStart.x, 30);
+        bioCtx.fillStyle = '#8bc34a';
+        bioCtx.font = '10px monospace';
+        bioCtx.fillText("Synaptic cleft", bio.cleftStart.x + 5, bio.cleftStart.y - 18);
+        
+        // Post-synaptic dendrite
+        bioCtx.fillStyle = '#2a5a7a';
+        bioCtx.beginPath();
+        bioCtx.ellipse(bio.postSynapse.x, bio.postSynapse.y, 30, 20, 0, 0, Math.PI * 2);
+        bioCtx.fill();
+        bioCtx.fillStyle = '#4caf50';
+        bioCtx.fillText("Post‑synaptic", bio.postSynapse.x + 10, bio.postSynapse.y - 15);
+        // dendrite tree
+        bioCtx.beginPath();
+        bioCtx.moveTo(bio.postSynapse.x + 25, bio.postSynapse.y);
+        bioCtx.lineTo(bio.postSynapse.x + 55, bio.postSynapse.y - 15);
+        bioCtx.lineTo(bio.postSynapse.x + 70, bio.postSynapse.y - 5);
+        bioCtx.strokeStyle = '#88aacc';
+        bioCtx.stroke();
+        
+        // Draw vesicles / particles
+        for (let p of bioParticles) {
+            p.draw(bioCtx);
+        }
+        
+        // Draw small circles representing synaptic vesicles in the cleft area
+        for (let i = 0; i < 8; i++) {
+            bioCtx.beginPath();
+            bioCtx.fillStyle = '#ffaa55';
+            bioCtx.arc(bio.cleftStart.x + 5 + i * 4, bio.cleftStart.y + (Math.sin(Date.now() * 0.002 + i) * 5), 2, 0, Math.PI * 2);
+            bioCtx.fill();
+        }
+    }
+    
+    function animateBio(timestamp) {
+        if (!bio.isPlaying) {
+            bio.animationId = requestAnimationFrame(animateBio);
+            drawBiologicalDiagram();
+            return;
+        }
+        const speedFactor = bio.speed;
+        // Spawn new particles periodically
+        if (Date.now() - lastBioSpawn > 400 / bio.speed) {
+            spawnBioParticle();
+            lastBioSpawn = Date.now();
+        }
+        // Update particles
+        for (let i = bioParticles.length-1; i >= 0; i--) {
+            bioParticles[i].update(speedFactor);
+            if (!bioParticles[i].active) bioParticles.splice(i,1);
+        }
+        drawBiologicalDiagram();
+        bio.animationId = requestAnimationFrame(animateBio);
+    }
+    
+    // ========== Neuromorphic / Transistor Animation ==========
+    const neuCanvas = document.getElementById('neuromorphicCanvas');
+    const neuCtx = neuCanvas.getContext('2d');
+    neuCanvas.width = 600;
+    neuCanvas.height = 300;
+    
+    const neuromorphic = {
+        gateStack: { x: 180, y: 120, width: 140, height: 60 },
+        channel: { x: 180, y: 185, width: 140, height: 20 },
+        lifBlock: { x: 420, y: 130, width: 100, height: 70 },
+        electrons: [],
+        accumulatedCharge: 0,
+        threshold: 100,
+        lastFiring: 0,
+        isPlaying: true,
+        speed: 1.0
+    };
+    
+    class Electron {
+        constructor(startX, startY, endX, endY) {
+            this.startX = startX;
+            this.startY = startY;
+            this.endX = endX;
+            this.endY = endY;
+            this.progress = 0;
+            this.speed = 0.01;
+            this.active = true;
+        }
+        update(speedFactor) {
+            if (!this.active) return;
+            this.progress += this.speed * speedFactor;
+            if (this.progress >= 1) {
+                this.active = false;
+            }
+        }
+        getPos() {
+            const t = this.progress;
+            const x = this.startX + (this.endX - this.startX) * t;
+            const y = this.startY + (this.endY - this.startY) * t;
+            return { x, y };
+        }
+        draw(ctx) {
+            if (!this.active) return;
+            const pos = this.getPos();
+            ctx.beginPath();
+            ctx.arc(pos.x, pos.y, 4, 0, Math.PI*2);
+            ctx.fillStyle = '#88ddff';
+            ctx.shadowBlur = 6;
+            ctx.shadowColor = '#00aaff';
+            ctx.fill();
+            ctx.fillStyle = '#ffffff';
+            ctx.arc(pos.x-1, pos.y-1, 1, 0, Math.PI*2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+        }
+    }
+    
+    let electrons = [];
+    let lastElectronSpawn = 0;
+    
+    function spawnElectron() {
+        const startX = neuromorphic.gateStack.x + 20;
+        const startY = neuromorphic.gateStack.y + neuromorphic.gateStack.height/2;
+        const endX = neuromorphic.lifBlock.x - 15;
+        const endY = neuromorphic.lifBlock.y + neuromorphic.lifBlock.height/2;
+        electrons.push(new Electron(startX, startY, endX, endY));
+        // add charge accumulation
+        neuromorphic.accumulatedCharge += 5 + Math.random() * 10;
+        if (neuromorphic.accumulatedCharge >= neuromorphic.threshold) {
+            neuromorphic.accumulatedCharge = 0;
+            neuromorphic.lastFiring = Date.now();
+            // create a "spike" visual effect
+            electrons.push(new Electron(neuromorphic.lifBlock.x + neuromorphic.lifBlock.width/2, neuromorphic.lifBlock.y + neuromorphic.lifBlock.height/2, neuromorphic.lifBlock.x + 80, neuromorphic.lifBlock.y + 20));
+        }
+        // decay LIF
+        neuromorphic.accumulatedCharge = Math.max(0, neuromorphic.accumulatedCharge - 2);
+    }
+    
+    function drawNeuromorphic() {
+        neuCtx.clearRect(0, 0, neuCanvas.width, neuCanvas.height);
+        // background
+        const grad = neuCtx.createLinearGradient(0, 0, 0, neuCanvas.height);
+        grad.addColorStop(0, '#0a0f1a');
+        grad.addColorStop(1, '#11161f');
+        neuCtx.fillStyle = grad;
+        neuCtx.fillRect(0, 0, neuCanvas.width, neuCanvas.height);
+        
+        // Gate Stack (GAA)
+        neuCtx.fillStyle = '#3a6a8a';
+        neuCtx.shadowBlur = 0;
+        neuCtx.fillRect(neuromorphic.gateStack.x, neuromorphic.gateStack.y, neuromorphic.gateStack.width, neuromorphic.gateStack.height);
+        neuCtx.fillStyle = '#ddbb77';
+        neuCtx.fillRect(neuromorphic.gateStack.x+5, neuromorphic.gateStack.y+5, neuromorphic.gateStack.width-10, neuromorphic.gateStack.height-10);
+        neuCtx.fillStyle = '#ffffff';
+        neuCtx.font = 'bold 12px monospace';
+        neuCtx.fillText("Gate Stack (Input Weight)", neuromorphic.gateStack.x+10, neuromorphic.gateStack.y-8);
+        
+        // Channel
+        neuCtx.fillStyle = '#2a4a6a';
+        neuCtx.fillRect(neuromorphic.channel.x, neuromorphic.channel.y, neuromorphic.channel.width, neuromorphic.channel.height);
+        neuCtx.fillStyle = '#88aacc';
+        neuCtx.fillText("Nanosheet Channel", neuromorphic.channel.x+10, neuromorphic.channel.y+15);
+        
+        // LIF Accumulator block
+        neuCtx.fillStyle = '#2a5a6a';
+        neuCtx.fillRect(neuromorphic.lifBlock.x, neuromorphic.lifBlock.y, neuromorphic.lifBlock.width, neuromorphic.lifBlock.height);
+        neuCtx.fillStyle = '#8bc34a';
+        neuCtx.fillText("LIF Accumulator", neuromorphic.lifBlock.x+8, neuromorphic.lifBlock.y-5);
+        // Show charge level
+        const chargePercent = neuromorphic.accumulatedCharge / neuromorphic.threshold;
+        neuCtx.fillStyle = '#ffaa66';
+        neuCtx.fillRect(neuromorphic.lifBlock.x+5, neuromorphic.lifBlock.y+neuromorphic.lifBlock.height-12, (neuromorphic.lifBlock.width-10) * Math.min(1, chargePercent), 8);
+        neuCtx.fillStyle = '#ffffff';
+        neuCtx.font = '10px monospace';
+        neuCtx.fillText(`Charge: ${Math.floor(neuromorphic.accumulatedCharge)}/${neuromorphic.threshold}`, neuromorphic.lifBlock.x+10, neuromorphic.lifBlock.y+20);
+        
+        // Firing spike indicator
+        if (Date.now() - neuromorphic.lastFiring < 200) {
+            neuCtx.beginPath();
+            neuCtx.moveTo(neuromorphic.lifBlock.x+neuromorphic.lifBlock.width+10, neuromorphic.lifBlock.y+30);
+            neuCtx.lineTo(neuromorphic.lifBlock.x+neuromorphic.lifBlock.width+30, neuromorphic.lifBlock.y+15);
+            neuCtx.lineTo(neuromorphic.lifBlock.x+neuromorphic.lifBlock.width+30, neuromorphic.lifBlock.y+45);
+            neuCtx.fillStyle = '#ff4444';
+            neuCtx.fill();
+            neuCtx.fillStyle = '#ffaa88';
+            neuCtx.font = 'bold 10px monospace';
+            neuCtx.fillText("SPIKE!", neuromorphic.lifBlock.x+neuromorphic.lifBlock.width+15, neuromorphic.lifBlock.y+25);
+        }
+        
+        // Draw electrons
+        for (let e of electrons) {
+            e.draw(neuCtx);
+        }
+    }
+    
+    function animateNeuromorphic(timestamp) {
+        if (!neuromorphic.isPlaying) {
+            drawNeuromorphic();
+            neuromorphic.animationId = requestAnimationFrame(animateNeuromorphic);
+            return;
+        }
+        const speedFactor = neuromorphic.speed;
+        // spawn electrons periodically
+        if (Date.now() - lastElectronSpawn > 300 / neuromorphic.speed) {
+            spawnElectron();
+            lastElectronSpawn = Date.now();
+        }
+        // update electrons
+        for (let i=electrons.length-1; i>=0; i--) {
+            electrons[i].update(speedFactor);
+            if (!electrons[i].active) electrons.splice(i,1);
+        }
+        // LIF decay
+        if (neuromorphic.accumulatedCharge > 0) {
+            neuromorphic.accumulatedCharge = Math.max(0, neuromorphic.accumulatedCharge - 1.2 * speedFactor);
+        }
+        drawNeuromorphic();
+        neuromorphic.animationId = requestAnimationFrame(animateNeuromorphic);
+    }
+    
+    // ========== Control Bindings ==========
+    // Bio
+    const bioPlayPause = document.getElementById('bioPlayPause');
+    const bioReset = document.getElementById('bioReset');
+    const bioSpeedSlider = document.getElementById('bioSpeed');
+    bioPlayPause.addEventListener('click', () => {
+        bio.isPlaying = !bio.isPlaying;
+        bioPlayPause.textContent = bio.isPlaying ? "⏸️ Pause" : "▶️ Play";
+    });
+    bioReset.addEventListener('click', () => {
+        bioParticles = [];
+        bio.isPlaying = true;
+        bioPlayPause.textContent = "⏸️ Pause";
+    });
+    bioSpeedSlider.addEventListener('input', (e) => {
+        bio.speed = parseFloat(e.target.value);
+    });
+    
+    // Neuromorphic
+    const neuPlayPause = document.getElementById('neuPlayPause');
+    const neuReset = document.getElementById('neuReset');
+    const neuSpeedSlider = document.getElementById('neuSpeed');
+    neuPlayPause.addEventListener('click', () => {
+        neuromorphic.isPlaying = !neuromorphic.isPlaying;
+        neuPlayPause.textContent = neuromorphic.isPlaying ? "⏸️ Pause" : "▶️ Play";
+    });
+    neuReset.addEventListener('click', () => {
+        electrons = [];
+        neuromorphic.accumulatedCharge = 0;
+        neuromorphic.lastFiring = 0;
+        neuromorphic.isPlaying = true;
+        neuPlayPause.textContent = "⏸️ Pause";
+    });
+    neuSpeedSlider.addEventListener('input', (e) => {
+        neuromorphic.speed = parseFloat(e.target.value);
+    });
+    
+    // Start animations
+    bio.animationId = requestAnimationFrame(animateBio);
+    neuromorphic.animationId = requestAnimationFrame(animateNeuromorphic);
+    
+    // Cleanup on page unload (optional)
+    window.addEventListener('beforeunload', () => {
+        if (bio.animationId) cancelAnimationFrame(bio.animationId);
+        if (neuromorphic.animationId) cancelAnimationFrame(neuromorphic.animationId);
+    });
+</script>
+</body>
+</html>

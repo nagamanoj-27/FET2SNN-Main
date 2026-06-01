@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>FET2SNN – Device Co‑design with PDF Export</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg: #050b1a;
+            --panel: #0d1525;
+            --card: #111b2e;
+            --border: #1e3050;
+            --accent: #3a86ff;
+            --green: #10b981;
+            --amber: #f59e0b;
+            --violet: #8b5cf6;
+            --text: #e2e8f0;
+            --muted: #94a3b8;
+        }
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+        .app-container {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* ── Top Bar ── */
+        .top-bar {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            height: 44px;
+            background: rgba(5, 11, 26, 0.96);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            z-index: 100;
+        }
+        .top-bar-title {
+            font-size: .85rem;
+            font-weight: 700;
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .tb-btn {
+            background: rgba(30, 48, 80, .8);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 5px 14px;
+            border-radius: 20px;
+            font-size: .75rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: background .2s, border-color .2s;
+            font-family: 'Inter', sans-serif;
+        }
+        .tb-btn:hover { background: rgba(58,134,255,.15); border-color: var(--accent); }
+
+        /* ── Control Panel ── */
+        .control-panel {
+            width: 300px;
+            min-width: 280px;
+            background: var(--panel);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            padding: 56px 0 0;
+            overflow: hidden;
+            z-index: 20;
+            flex-shrink: 0;
+        }
+        .panel-inner {
+            flex: 1;
+            overflow-y: auto;
+            padding: 14px 14px 20px;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border) transparent;
+        }
+        .panel-title {
+            font-size: .78rem;
+            font-weight: 700;
+            color: var(--muted);
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            margin-bottom: 14px;
+        }
+        .control-group { margin-bottom: 12px; }
+        .control-group label {
+            display: block;
+            font-size: .73rem;
+            color: var(--muted);
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        .ctrl-row { display: flex; align-items: center; gap: 8px; }
+        input[type="range"] {
+            flex: 1;
+            height: 4px;
+            background: var(--border);
+            border-radius: 4px;
+            outline: none;
+            -webkit-appearance: none;
+            cursor: pointer;
+            accent-color: var(--accent);
+        }
+        .val-num {
+            font-family: 'Fira Code', monospace;
+            font-size: .75rem;
+            color: var(--accent);
+            min-width: 52px;
+            text-align: right;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 3px 6px;
+        }
+        select {
+            width: 100%;
+            background: var(--card);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 6px 8px;
+            border-radius: 8px;
+            font-size: .78rem;
+            font-family: 'Inter', sans-serif;
+            outline: none;
+        }
+        select:focus { border-color: var(--accent); }
+
+        /* ── Output card ── */
+        .output-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px 14px;
+            margin-top: 16px;
+        }
+        .output-card-title {
+            font-size: .72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--muted);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .output-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(30,48,80,.5);
+            font-size: .82rem;
+        }
+        .output-row:last-child { border-bottom: none; }
+        .output-row .label { color: var(--muted); }
+        .output-row .value {
+            font-family: 'Fira Code', monospace;
+            font-size: .82rem;
+            font-weight: 600;
+            color: var(--green);
+        }
+
+        /* ── Buttons ── */
+        .btn-export {
+            width: 100%;
+            margin-top: 14px;
+            background: linear-gradient(135deg, #065f46, #10b981);
+            border: none;
+            color: white;
+            padding: 9px 0;
+            border-radius: 10px;
+            font-size: .82rem;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            transition: opacity .2s;
+        }
+        .btn-export:hover { opacity: .88; }
+        .panel-footer {
+            font-size: .68rem;
+            text-align: center;
+            color: var(--muted);
+            margin-top: 12px;
+            opacity: .6;
+        }
+
+        /* ── Viewer ── */
+        .viewer-panel {
+            flex: 1;
+            position: relative;
+            background: var(--bg);
+            padding-top: 44px;
+        }
+        #threeCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        .status-badge {
+            position: absolute;
+            bottom: 16px;
+            right: 16px;
+            background: rgba(0,0,0,.65);
+            backdrop-filter: blur(8px);
+            border: 1px solid var(--border);
+            padding: 5px 14px;
+            border-radius: 20px;
+            font-size: .72rem;
+            color: var(--green);
+            z-index: 25;
+            pointer-events: none;
+            font-family: 'Fira Code', monospace;
+        }
+        .label-overlay {
+            position: absolute;
+            top: 52px;
+            left: 12px;
+            background: rgba(0,0,0,.55);
+            backdrop-filter: blur(6px);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 8px 12px;
+            font-size: .7rem;
+            color: var(--muted);
+            font-family: 'Fira Code', monospace;
+            line-height: 1.8;
+            pointer-events: none;
+        }
+
+        /* legend */
+        .legend {
+            position: absolute;
+            bottom: 18px;
+            left: 18px;
+            background: rgba(5,10,25,0.85);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 10px;
+            z-index: 30;
+            pointer-events: none;
+            backdrop-filter: blur(6px);
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .leg-item { display: flex; align-items: center; gap: 6px; }
+        .leg-dot  { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+
+        /* Uncertainty Indicators */
+        .uncertainty-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 9px;
+            padding: 2px 8px;
+            border-radius: 20px;
+            background: #151f32;
+            cursor: help;
+            border: 1px solid var(--border);
+            font-weight: 600;
+            position: relative;
+        }
+        .badge-high { background: rgba(16,185,129,0.12); color: #10b981; border-color: rgba(16,185,129,0.3); }
+        .badge-medium { background: rgba(245,158,11,0.12); color: #fbbf24; border-color: rgba(245,158,11,0.3); }
+        .badge-low { background: rgba(239,68,68,0.12); color: #f87171; border-color: rgba(239,68,68,0.3); }
+        
+        .tooltip-text {
+            visibility: hidden;
+            width: 210px;
+            background: #0d1525;
+            color: #e2e8f0;
+            text-align: left;
+            border-radius: 8px;
+            padding: 8px 10px;
+            position: absolute;
+            z-index: 100;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 10px;
+            opacity: 0;
+            transition: opacity 0.2s;
+            pointer-events: none;
+            border: 1px solid var(--border);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+            line-height: 1.5;
+            font-family: 'Fira Code', monospace;
+        }
+        .uncertainty-badge:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+        .confidence-header {
+            margin-top: 12px;
+            padding: 8px 10px;
+            background: #151f32;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            text-align: center;
+            font-size: 0.72rem;
+            color: var(--muted);
+            line-height: 1.4;
+            transition: background .2s, border-color .2s;
+        }
+
+        @media (max-width: 640px) {
+            .control-panel { width: 260px; }
+        }
+    </style>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/"
+            }
+        }
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body>
+
+<!-- Top Bar -->
+<div class="top-bar">
+    <div class="top-bar-title">🔬 FET2SNN — Device Co‑design & PDF Export</div>
+    <a href="index.html" class="tb-btn">← Back to Tool</a>
+</div>
+
+<div class="app-container">
+
+    <!-- Left Panel -->
+    <div class="control-panel">
+        <div class="panel-inner">
+            <div class="panel-title">⚙️ Device Parameters</div>
+            <div id="paramContainer"></div>
+
+            <div class="output-card">
+                <div class="output-card-title">📊 SNN Predictions</div>
+                <div class="output-row"><span class="label">Accuracy</span><div style="display:flex; align-items:center; gap:8px;"><span class="value" id="accuracy">--</span><span id="badge-accuracy"></span></div></div>
+                <div class="output-row"><span class="label">Energy / Spike</span><div style="display:flex; align-items:center; gap:8px;"><span class="value" id="energy">--</span><span id="badge-energy"></span></div></div>
+                <div class="output-row"><span class="label">Latency</span><div style="display:flex; align-items:center; gap:8px;"><span class="value" id="latency">--</span><span id="badge-latency"></span></div></div>
+                <div class="output-row"><span class="label">Vth</span><div style="display:flex; align-items:center; gap:8px;"><span class="value" id="vth">--</span><span id="badge-vth"></span></div></div>
+                <div class="output-row"><span class="label">SS</span><div style="display:flex; align-items:center; gap:8px;"><span class="value" id="ss">--</span><span id="badge-ss"></span></div></div>
+                <div class="output-row"><span class="label">Ion / Ioff</span><div style="display:flex; align-items:center; gap:8px;"><span class="value" id="ionioff">--</span><span id="badge-ionioff"></span></div></div>
+                <div class="confidence-header" id="confidenceHeader">🔍 Confidence: Loading…</div>
+            </div>
+
+            <button id="exportPdfBtn" class="btn-export">📄 Export PDF Report</button>
+            <div class="panel-footer">FET2SNN v2.1 · TCAD LiveView</div>
+        </div>
+    </div>
+
+    <!-- Right: 3D Viewer -->
+    <div class="viewer-panel" id="viewerPanel">
+        <canvas id="threeCanvas"></canvas>
+        <div class="label-overlay" id="labelOverlay">Loading…</div>
+        <!-- legend -->
+        <div class="legend">
+            <div class="leg-item"><div class="leg-dot" style="background:#3a86ff;opacity:.7;"></div>Metal Gate</div>
+            <div class="leg-item"><div class="leg-dot" style="background:#FFAA44;opacity:.7;"></div>High-k Oxide</div>
+            <div class="leg-item"><div class="leg-dot" style="background:#CCCCCC;"></div>Si Nanosheet</div>
+            <div class="leg-item"><div class="leg-dot" style="background:#ff8844;"></div>Source / Drain</div>
+            <div class="leg-item"><div class="leg-dot" style="background:#8B4513;opacity:.8;"></div>Substrate</div>
+        </div>
+        <div class="status-badge">🔬 TCAD Nanosheet FET · Drag to rotate · Scroll to zoom</div>
+    </div>
+</div>
+
+<script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+
+    // ── SNN Prediction Model ──────────────────────────────────────
+    function predictSNN(params) {
+        const { Lg, Wfin, Nd, Nsheets, Dtype } = params;
+        let Vth = 0.32 + (Lg - 22) * 0.002 - Math.log10(Nd / 1e17) * 0.025;
+        Vth = Math.max(0.2, Math.min(0.55, Vth));
+        let SS = 60 + (Lg - 22) * 0.5 + (Nd > 1e18 ? 8 : 0);
+        SS = Math.min(85, Math.max(60, SS));
+        let Ion = 800 * (Wfin / 40) * Nsheets * Math.exp(-(Vth - 0.32) / 0.04);
+        Ion = Math.min(3000, Math.max(200, Ion));
+        let Ioff = Ion / (1e7 * Math.pow(10, Vth / (SS / 1000)));
+        Ioff = Math.max(0.1, Math.min(5000, Ioff));
+        const Iratio = Math.round(Ion / Ioff);
+        let accuracy = 75 + 12 * (1 - Math.exp(-Iratio / 1e6)) - (SS - 60) * 0.3;
+        accuracy = Math.min(94, Math.max(65, accuracy));
+        if (Dtype === 'p') accuracy -= 2;
+        accuracy = parseFloat(accuracy.toFixed(1));
+        let energy = 12 * (Lg / 22) * Math.exp(Vth / 0.1) / Math.sqrt(Nsheets);
+        energy = Math.min(25, Math.max(1.2, energy));
+        energy = parseFloat(energy.toFixed(2));
+        let latency = 8.0 * (1000 / Ion) * (Lg / 22);
+        latency = Math.min(12, Math.max(1.5, latency));
+        latency = parseFloat(latency.toFixed(2));
+        return { Vth: parseFloat(Vth.toFixed(3)), SS: parseFloat(SS.toFixed(1)), Ion, Ioff, Iratio, accuracy, energy, latency };
+    }
+
+    // ── Parameter Definitions ──────────────────────────────────────
+    const paramDefs = [
+        { id: 'Lg',     label: 'Gate Length',         unit: 'nm',     min: 10,   max: 50,  step: 1,    default: 22 },
+        { id: 'Wfin',   label: 'Nanosheet Width',     unit: 'nm',     min: 10,   max: 100, step: 1,    default: 40 },
+        { id: 'Lsd',    label: 'S/D Length',          unit: 'nm',     min: 10,   max: 40,  step: 1,    default: 20 },
+        { id: 'Hgate',  label: 'Gate Height',         unit: 'nm',     min: 15,   max: 60,  step: 1,    default: 30 },
+        { id: 'Nsheets',label: 'Stacked Sheets',      unit: '',       min: 1,    max: 5,   step: 1,    default: 2  },
+        { id: 'Nd',     label: 'Channel Doping (cm⁻³)',unit: 'log',   min: 1e15, max: 1e19,step: 1e17, default: 1e17, log: true },
+        { id: 'Dtype',  label: 'Doping Type',         type: 'select', options: ['n', 'p'], default: 'n' },
+    ];
+
+    let currentParams = {
+        Lg: 22,
+        Wfin: 40,
+        Lsd: 20,
+        Hgate: 30,
+        Nsheets: 2,
+        Nd: 1e17,
+        Dtype: 'n'
+    };
+    let currentPred  = {};
+
+    // ── Build UI ──────────────────────────────────────────────────
+    function buildUI() {
+        const container = document.getElementById('paramContainer');
+        container.innerHTML = '';
+        paramDefs.forEach(def => {
+            const group = document.createElement('div');
+            group.className = 'control-group';
+
+            const label = document.createElement('label');
+            label.textContent = def.label + (def.unit && def.unit !== 'log' ? ` (${def.unit})` : '');
+            group.appendChild(label);
+
+            let input;
+            if (def.type === 'select') {
+                input = document.createElement('select');
+                def.options.forEach(opt => {
+                    const o = document.createElement('option');
+                    o.value = opt;
+                    o.textContent = opt === 'n' ? 'n-type (NMOS)' : 'p-type (PMOS)';
+                    input.appendChild(o);
+                });
+                group.appendChild(input);
+            } else {
+                const row = document.createElement('div');
+                row.className = 'ctrl-row';
+                input = document.createElement('input');
+                input.type = 'range';
+                input.min  = def.log ? Math.log10(def.min) : def.min;
+                input.max  = def.log ? Math.log10(def.max) : def.max;
+                input.step = def.log ? 0.05 : def.step;
+                input.value = def.log ? Math.log10(def.default) : def.default;
+                const display = document.createElement('span');
+                display.className = 'val-num';
+                row.appendChild(input);
+                row.appendChild(display);
+                group.appendChild(row);
+                input._display = display;
+            }
+
+            container.appendChild(group);
+
+            const update = () => {
+                const raw = input.value;
+                let real = def.log ? Math.pow(10, parseFloat(raw)) : (def.type === 'select' ? raw : parseFloat(raw));
+                if (input._display) {
+                    if (def.log) {
+                        const e = Math.floor(Math.log10(real));
+                        input._display.textContent = `10^${e}`;
+                    } else {
+                        input._display.textContent = real + (def.unit ? ' ' + def.unit : '');
+                    }
+                }
+                currentParams[def.id] = (def.type === 'select') ? raw : real;
+                onParamChange();
+            };
+            input.addEventListener('input', update);
+            update();
+        });
+    }
+
+    // ---------- Calibration Ranges & Uncertainty Indicators ----------
+    const CALIBRATION = {
+        Lg: { min: 10, max: 50 },
+        Wfin: { min: 10, max: 100 },
+        Lsd: { min: 10, max: 40 },
+        Hgate: { min: 15, max: 60 },
+        Nsheets: { min: 1, max: 5 },
+        Nd: { min: 1e15, max: 1e19 }
+    };
+
+    function computeConfidence(params) {
+        let scores = [];
+        for (let [key, range] of Object.entries(CALIBRATION)) {
+            if (params[key] === undefined) continue;
+            let val = params[key];
+            let min = range.min;
+            let max = range.max;
+            let distance = 0;
+            if (key === 'Nd') {
+                let logVal = Math.log10(val);
+                let logMin = Math.log10(min);
+                let logMax = Math.log10(max);
+                if (logVal < logMin) distance = (logMin - logVal) / logMin;
+                else if (logVal > logMax) distance = (logVal - logMax) / logMax;
+            } else {
+                if (val < min) distance = (min - val) / min;
+                else if (val > max) distance = (val - max) / max;
+            }
+            let confidence = Math.max(0, 1 - distance * 2);
+            scores.push(confidence);
+        }
+        if (scores.length === 0) return 1.0;
+        return scores.reduce((a,b) => a+b, 0) / scores.length;
+    }
+
+    function getConfidenceLevel(confidence) {
+        if (confidence >= 0.8) return { level: 'High', color: 'badge-high', symbol: '🟢' };
+        if (confidence >= 0.5) return { level: 'Medium', color: 'badge-medium', symbol: '🟡' };
+        return { level: 'Low', color: 'badge-low', symbol: '🔴' };
+    }
+
+    function generateUncertaintyBadgeHTML(confidence, reason) {
+        const { level, color, symbol } = getConfidenceLevel(confidence);
+        return `<span class="uncertainty-badge ${color}">
+                    ${symbol} ${level}
+                    <span class="tooltip-text">${reason}</span>
+                </span>`;
+    }
+
+    function updateConfidence() {
+        const confidence = computeConfidence(currentParams);
+        const { level, color, symbol } = getConfidenceLevel(confidence);
+
+        // Compile tooltip details
+        let reason = `Overall: ${(confidence*100).toFixed(0)}%<br>`;
+        for (let [key, range] of Object.entries(CALIBRATION)) {
+            if (currentParams[key] !== undefined) {
+                let val = currentParams[key];
+                let min = range.min;
+                let max = range.max;
+                let displayVal = (key === 'Nd') ? val.toExponential(2) : val;
+                let displayMin = (key === 'Nd') ? min.toExponential(2) : min;
+                let displayMax = (key === 'Nd') ? max.toExponential(2) : max;
+
+                if (val < min) {
+                    reason += `• ${key}: ${displayVal} &lt; ${displayMin} (extrapolated)<br>`;
+                } else if (val > max) {
+                    reason += `• ${key}: ${displayVal} &gt; ${displayMax} (extrapolated)<br>`;
+                } else {
+                    reason += `• ${key}: within range ✓<br>`;
+                }
+            }
+        }
+
+        const badgeHtml = generateUncertaintyBadgeHTML(confidence, reason);
+
+        // Update rows
+        document.getElementById('badge-accuracy').innerHTML = badgeHtml;
+        document.getElementById('badge-energy').innerHTML   = badgeHtml;
+        document.getElementById('badge-latency').innerHTML  = badgeHtml;
+        document.getElementById('badge-vth').innerHTML      = badgeHtml;
+        document.getElementById('badge-ss').innerHTML       = badgeHtml;
+        document.getElementById('badge-ionioff').innerHTML  = badgeHtml;
+
+        // Update overall confidence header
+        const header = document.getElementById('confidenceHeader');
+        header.innerHTML = `🔍 Overall Prediction Confidence: ${symbol} ${level} (${(confidence*100).toFixed(0)}%)`;
+    }
+
+    function onParamChange() {
+        currentPred = predictSNN(currentParams);
+        document.getElementById('accuracy').textContent = currentPred.accuracy + ' %';
+        document.getElementById('energy').textContent   = currentPred.energy + ' fJ';
+        document.getElementById('latency').textContent  = currentPred.latency + ' ms';
+        document.getElementById('vth').textContent      = currentPred.Vth + ' V';
+        document.getElementById('ss').textContent       = currentPred.SS + ' mV/dec';
+        document.getElementById('ionioff').textContent  = currentPred.Iratio.toExponential(2);
+        updateLabel();
+        updateConfidence();
+        rebuild3DModel(currentParams);
+    }
+
+    function updateLabel() {
+        const p = currentParams;
+        document.getElementById('labelOverlay').innerHTML =
+            `Lg = ${p.Lg} nm &nbsp;|&nbsp; Wfin = ${p.Wfin} nm<br>` +
+            `Stacks = ${p.Nsheets} &nbsp;|&nbsp; ${p.Dtype === 'n' ? 'n-type' : 'p-type'}<br>` +
+            `Vth = ${currentPred.Vth} V &nbsp;|&nbsp; SS = ${currentPred.SS} mV/dec`;
+    }
+
+    // ── Three.js 3D Scene ─────────────────────────────────────────
+    let scene, camera, renderer, labelRenderer, controls3d, deviceGroup;
+
+    function init3D() {
+        const canvas = document.getElementById('threeCanvas');
+        const vp = document.getElementById('viewerPanel');
+        const W = vp.clientWidth || (window.innerWidth - 300);
+        const H = Math.max(10, vp.clientHeight - 44) || (window.innerHeight - 44);
+
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x050b1a);
+        scene.fog = new THREE.FogExp2(0x050b1a, 0.004);
+
+        camera = new THREE.PerspectiveCamera(45, W / H, 0.1, 1000);
+        camera.position.set(5, 4.5, 8);
+
+        renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+        renderer.setSize(W, H);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+        labelRenderer = new CSS2DRenderer();
+        labelRenderer.setSize(W, H);
+        labelRenderer.domElement.style.position = 'absolute';
+        labelRenderer.domElement.style.top = '44px';
+        labelRenderer.domElement.style.left = '0px';
+        labelRenderer.domElement.style.pointerEvents = 'none';
+        vp.appendChild(labelRenderer.domElement);
+
+        controls3d = new OrbitControls(camera, canvas);
+        controls3d.enableDamping = true;
+        controls3d.dampingFactor = 0.06;
+        controls3d.target.set(0, 0.5, 0);
+        controls3d.minDistance = 1;
+        controls3d.maxDistance = 50;
+
+        // Lighting
+        scene.add(new THREE.AmbientLight(0x404060, 1.2));
+        const key = new THREE.DirectionalLight(0xffffff, 1.4);
+        key.position.set(2, 5, 3);
+        key.castShadow = true;
+        key.shadow.mapSize.set(1024, 1024);
+        scene.add(key);
+        const fill = new THREE.PointLight(0x4466cc, 0.6);
+        fill.position.set(-1, 2, 2);
+        scene.add(fill);
+        const rim = new THREE.PointLight(0xffaa66, 0.7);
+        rim.position.set(0, 1.5, -2);
+        scene.add(rim);
+
+        const grid = new THREE.GridHelper(12, 20, 0x88aaff, 0x335588);
+        grid.position.y = -1.2;
+        scene.add(grid);
+
+        animate();
+
+        window.addEventListener('resize', () => {
+            const W2 = vp.clientWidth || (window.innerWidth - 300);
+            const H2 = Math.max(10, vp.clientHeight - 44) || (window.innerHeight - 44);
+            camera.aspect = W2 / H2;
+            camera.updateProjectionMatrix();
+            renderer.setSize(W2, H2);
+            labelRenderer.setSize(W2, H2);
+        });
+    }
+
+    function animate() {
+        requestAnimationFrame(animate);
+        controls3d?.update();
+        renderer?.render(scene, camera);
+        labelRenderer?.render(scene, camera);
+    }
+
+    function rebuild3DModel(params) {
+        if (!scene) return;
+        if (!params || !params.Lg) return;
+        if (deviceGroup) { scene.remove(deviceGroup); deviceGroup.traverse(o => { o.geometry?.dispose(); }); }
+        deviceGroup = new THREE.Group();
+
+        const Lg      = params.Lg      / 10;
+        const Wns     = params.Wfin     / 10;
+        const Tns     = 5 / 10; // 5nm default thickness
+        const Nstacks = params.Nsheets;
+        const NSD     = 1.0;
+
+        // Substrate texture
+        const canvasTex = document.createElement('canvas');
+        canvasTex.width = canvasTex.height = 512;
+        const ctxT = canvasTex.getContext('2d');
+        ctxT.fillStyle = '#8B4513'; ctxT.fillRect(0, 0, 512, 512);
+        ctxT.strokeStyle = '#D2B48C'; ctxT.lineWidth = 2;
+        for (let i = 0; i < 512; i += 32) {
+            ctxT.beginPath(); ctxT.moveTo(i, 0); ctxT.lineTo(i, 512); ctxT.stroke();
+            ctxT.beginPath(); ctxT.moveTo(0, i); ctxT.lineTo(512, i); ctxT.stroke();
+        }
+        const substrateMat = new THREE.MeshStandardMaterial({ map: new THREE.CanvasTexture(canvasTex), roughness:0.7, metalness:0.1 });
+        const substrate    = new THREE.Mesh(new THREE.BoxGeometry(Wns+0.8, 0.3, Lg+0.8), substrateMat);
+        substrate.position.y = -0.7;
+        substrate.receiveShadow = substrate.castShadow = true;
+        deviceGroup.add(substrate);
+
+        // Materials
+        const sheetMat  = new THREE.MeshStandardMaterial({ color:0xCCCCCC, roughness:0.2, metalness:0.6 });
+        const highKMat  = new THREE.MeshStandardMaterial({ color:0xFFAA44, transparent:true, opacity:0.4, emissive:0x442200 });
+        const gateMat   = new THREE.MeshStandardMaterial({ color:0x3a86ff, metalness:0.95, roughness:0.25, transparent:true, opacity:0.65 });
+        const spacerMat = new THREE.MeshStandardMaterial({ color:0x444444, metalness:0.3, roughness:0.4 });
+        
+        // Doping-dependent S/D color
+        const t = Math.min(0.95, Math.max(0.2, (Math.log10(params.Nd) - 15) / 4));
+        const sdColor = params.Dtype === 'n'
+            ? new THREE.Color(0.75 + t * 0.25, 0.15 + t * 0.1, 0.15 + t * 0.1) // reddish
+            : new THREE.Color(0.15 + t * 0.1, 0.15 + t * 0.1, 0.75 + t * 0.25); // bluish
+        const sdMat     = new THREE.MeshStandardMaterial({ color:sdColor, metalness:0.9, roughness:0.2, emissive:0x331100 });
+
+        const sheetHeight = Tns;
+        const spacing     = 0.4;
+        const startY      = -0.2;
+
+        let minX = -Wns/2 - 0.5, maxX = Wns/2 + 0.5;
+        let minY = startY - 0.3, maxY = startY + Nstacks*(sheetHeight+spacing) - spacing + 0.3;
+        let minZ = -Lg/2 - 0.5, maxZ = Lg/2 + 0.5;
+
+        for (let i = 0; i < Nstacks; i++) {
+            const y = startY + i*(sheetHeight + spacing);
+
+            const sheet = new THREE.Mesh(new THREE.BoxGeometry(Wns, sheetHeight, Lg), sheetMat);
+            sheet.position.y = y; sheet.castShadow = true;
+            deviceGroup.add(sheet);
+
+            const highK = new THREE.Mesh(new THREE.BoxGeometry(Wns+0.06, sheetHeight+0.06, Lg+0.06), highKMat);
+            highK.position.y = y;
+            deviceGroup.add(highK);
+
+            const gate = new THREE.Mesh(new THREE.BoxGeometry(Wns+0.14, sheetHeight+0.14, Lg+0.14), gateMat);
+            gate.position.y = y; gate.castShadow = true;
+            deviceGroup.add(gate);
+
+            if (i < Nstacks - 1) {
+                const spacer = new THREE.Mesh(new THREE.BoxGeometry(0.2, spacing, 0.35), spacerMat);
+                spacer.position.set(0, y + sheetHeight + spacing/2, 0);
+                deviceGroup.add(spacer);
+            }
+
+            // Source & Drain (proportions matching index.html)
+            const sdW = 0.25, sdH = sheetHeight*0.85, sdL = 0.6;
+            const src = new THREE.Mesh(new THREE.BoxGeometry(sdW, sdH, sdL), sdMat);
+            const drn = new THREE.Mesh(new THREE.BoxGeometry(sdW, sdH, sdL), sdMat);
+            src.position.set(-Wns/2 - 0.3, y + sheetHeight/2,  Lg/2 + 0.4);
+            drn.position.set( Wns/2 + 0.3, y + sheetHeight/2,  Lg/2 + 0.4);
+            src.castShadow = drn.castShadow = true;
+            deviceGroup.add(src, drn);
+        }
+
+        // CSS2D labels
+        const mkLabel = (txt, color, pos) => {
+            const d = document.createElement('div');
+            d.textContent = txt;
+            d.style.cssText = `color:${color};font-size:11px;font-weight:700;font-family:monospace;
+                background:rgba(0,0,0,.7);padding:2px 7px;border-radius:10px;
+                border:1px solid ${color};backdrop-filter:blur(4px);white-space:nowrap;`;
+            const obj = new CSS2DObject(d);
+            obj.position.copy(pos);
+            return obj;
+        };
+
+        const labelY = startY + Nstacks * (sheetHeight + spacing) + 0.4;
+        deviceGroup.add(
+            mkLabel(`Gate Lg=${params.Lg}nm`, '#88aaff', new THREE.Vector3(0, labelY, Lg/2+0.8)),
+            mkLabel(`Wns=${params.Wfin}nm`,   '#88aaff', new THREE.Vector3(Wns/2+0.9, labelY, 0)),
+            mkLabel(`Stacks=${Nstacks}`,      '#88aaff', new THREE.Vector3(-Wns/2-1.0, labelY-0.2, 0)),
+            mkLabel('Source',                 '#ff8888', new THREE.Vector3(-Wns/2-0.7, 0.2, Lg/2+0.5)),
+            mkLabel('Drain',                  '#ff8888', new THREE.Vector3(Wns/2+0.7, 0.2, Lg/2+0.5))
+        );
+
+        scene.add(deviceGroup);
+    }
+
+    // ── PDF Export ────────────────────────────────────────────────
+    async function exportToPDF() {
+        const btn = document.getElementById('exportPdfBtn');
+        const origText = btn.innerHTML;
+        btn.innerHTML = '⏳ Generating PDF…';
+        btn.disabled = true;
+
+        try {
+            const { jsPDF } = window.jspdf;
+
+            // Capture 3D canvas
+            const canvas3D = document.getElementById('threeCanvas');
+            renderer.render(scene, camera);
+            const imgData3D = canvas3D.toDataURL('image/png');
+
+            // Capture left panel
+            const panel = document.getElementById('paramContainer');
+            const panelSnap = await html2canvas(panel, { scale: 2, backgroundColor: '#0d1525' });
+
+            const pdf = new jsPDF('l', 'mm', 'a4');
+            const PW = pdf.internal.pageSize.getWidth();
+            const PH = pdf.internal.pageSize.getHeight();
+
+            // Header
+            pdf.setFillColor(5, 11, 26);
+            pdf.rect(0, 0, PW, PH, 'F');
+
+            pdf.setTextColor(58, 134, 255);
+            pdf.setFontSize(18);
+            pdf.setFont('helvetica', 'bold');
+            pdf.text('FET2SNN – Device Co‑design Report', PW / 2, 14, { align: 'center' });
+
+            pdf.setTextColor(148, 163, 184);
+            pdf.setFontSize(8.5);
+            pdf.setFont('helvetica', 'normal');
+            pdf.text(`Generated: ${new Date().toLocaleString()}  |  FET2SNN v2.1  |  TCAD Calibration 2025`, PW / 2, 21, { align: 'center' });
+
+            // Divider
+            pdf.setDrawColor(30, 48, 80);
+            pdf.line(8, 24, PW - 8, 24);
+
+            // 3D viewer image (right 55%)
+            const viewW = PW * 0.54;
+            const viewH = (canvas3D.height / canvas3D.width) * viewW;
+            const viewX = PW - viewW - 6;
+            pdf.addImage(imgData3D, 'PNG', viewX, 28, viewW, Math.min(viewH, PH * 0.52));
+
+            // Panel image (left 40%)
+            const panelW = PW * 0.4;
+            const panelH = (panelSnap.height / panelSnap.width) * panelW;
+            pdf.addImage(panelSnap.toDataURL(), 'PNG', 6, 28, panelW, Math.min(panelH, PH * 0.52));
+
+            // SNN Summary table
+            let ty = 28 + Math.min(Math.max(viewH, panelH), PH * 0.52) + 8;
+            pdf.setTextColor(16, 185, 129);
+            pdf.setFontSize(11);
+            pdf.setFont('helvetica', 'bold');
+            pdf.text('SNN Performance Summary', 8, ty);
+
+            pdf.setFont('courier', 'normal');
+            pdf.setFontSize(9);
+            pdf.setTextColor(226, 232, 240);
+            const rows = [
+                ['Accuracy',          `${currentPred.accuracy} %`],
+                ['Energy / Spike',    `${currentPred.energy} fJ`],
+                ['Inference Latency', `${currentPred.latency} ms`],
+                ['Vth',               `${currentPred.Vth} V`],
+                ['SS',                `${currentPred.SS} mV/dec`],
+                ['Ion / Ioff',        currentPred.Iratio.toExponential(2)],
+            ];
+            ty += 6;
+            rows.forEach(([k, v]) => {
+                pdf.setTextColor(148, 163, 184); pdf.text(k + ':', 10, ty);
+                pdf.setTextColor(58, 134, 255);  pdf.text(v, 60, ty);
+                ty += 5;
+            });
+
+            // Device Parameters
+            ty += 2;
+            pdf.setTextColor(139, 92, 246);
+            pdf.setFontSize(11);
+            pdf.setFont('helvetica', 'bold');
+            pdf.text('Device Parameters', PW / 2 + 6, ty - 26);
+            pdf.setFont('courier', 'normal');
+            pdf.setFontSize(9);
+            let py = ty - 20;
+            Object.entries(currentParams).forEach(([k, v]) => {
+                const vStr = typeof v === 'number' && v > 1000 ? v.toExponential(2) : String(v);
+                pdf.setTextColor(148, 163, 184); pdf.text(k + ':', PW / 2 + 8, py);
+                pdf.setTextColor(245, 158, 11);  pdf.text(vStr, PW / 2 + 36, py);
+                py += 5;
+            });
+
+            // Footer
+            pdf.setTextColor(30, 48, 80);
+            pdf.line(8, PH - 12, PW - 8, PH - 12);
+            pdf.setTextColor(100, 116, 139);
+            pdf.setFontSize(7.5);
+            pdf.setFont('helvetica', 'normal');
+            pdf.text('FET2SNN – Device-to-SNN Co‑design Tool | DOI: 10.xxxx/fet2snn.2.1 | All values are pre-TCAD analytical approximations', PW / 2, PH - 7, { align: 'center' });
+
+            pdf.save(`FET2SNN_Report_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.pdf`);
+        } catch (e) {
+            console.error('PDF export error:', e);
+            alert('PDF export failed. Check browser console.');
+        }
+
+        btn.innerHTML = origText;
+        btn.disabled = false;
+    }
+
+    // ── Init ──────────────────────────────────────────────────────
+    init3D();
+    buildUI();
+    setTimeout(() => { if (Object.keys(currentParams).length) rebuild3DModel(currentParams); }, 300);
+    document.getElementById('exportPdfBtn').addEventListener('click', exportToPDF);
+</script>
+</body>
+</html>

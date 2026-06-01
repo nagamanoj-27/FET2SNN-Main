@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sentaurus Device User Guide</title>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    /* CSS Variables */
+    :root {
+      /* Light Theme */
+      --bg-color: #f8fafc;
+      --surface-color: #ffffff;
+      --border-color: #e2e8f0;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --primary-color: #10b981;
+      --primary-hover: #059669;
+      --code-bg: #1e293b;
+      --code-text: #f8fafc;
+      --sidebar-width: 280px;
+      --topbar-height: 60px;
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      --transition: all 0.2s ease-in-out;
+    }
+
+    [data-theme="dark"] {
+      /* Dark Theme */
+      --bg-color: #0f172a;
+      --surface-color: #1e293b;
+      --border-color: #334155;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --primary-color: #34d399;
+      --primary-hover: #6ee7b7;
+      --code-bg: #0b1120;
+      --code-text: #f1f5f9;
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Global Styles */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      line-height: 1.6;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    h1, h2, h3, h4 { font-weight: 600; margin-bottom: 1rem; color: var(--text-main); }
+    h1 { font-size: 2.25rem; margin-bottom: 1.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color); }
+    h2 { font-size: 1.75rem; margin-top: 2.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; }
+    h3 { font-size: 1.25rem; margin-top: 1.5rem; }
+    p { margin-bottom: 1rem; color: var(--text-muted); }
+    ul { margin-left: 1.5rem; margin-bottom: 1rem; color: var(--text-muted); }
+    li { margin-bottom: 0.5rem; }
+    a { color: var(--primary-color); text-decoration: none; transition: var(--transition); }
+    a:hover { color: var(--primary-hover); text-decoration: underline; }
+    
+    code { font-family: 'Fira Code', monospace; font-size: 0.85em; background: rgba(128,128,128,0.15); padding: 0.15rem 0.3rem; border-radius: 4px; color: var(--primary-color); }
+    pre { background: var(--code-bg); color: var(--code-text); padding: 1.25rem; border-radius: 8px; overflow-x: auto; font-family: 'Fira Code', monospace; font-size: 0.85rem; margin-bottom: 1.5rem; position: relative; }
+    pre code { background: none; padding: 0; color: inherit; }
+
+    /* Topbar */
+    .topbar {
+      position: fixed; top: 0; left: 0; right: 0; height: var(--topbar-height);
+      background: var(--surface-color); border-bottom: 1px solid var(--border-color);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 1.5rem; z-index: 100; box-shadow: var(--shadow);
+      transition: var(--transition);
+    }
+    .topbar-left { display: flex; align-items: center; gap: 1rem; }
+    .menu-toggle { display: none; background: none; border: none; color: var(--text-main); font-size: 1.5rem; cursor: pointer; }
+    .brand { font-size: 1.25rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; }
+    
+    .search-container { position: relative; max-width: 400px; width: 100%; margin: 0 2rem; }
+    .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
+    .search-input { 
+      width: 100%; padding: 0.6rem 1rem 0.6rem 2.5rem; 
+      border: 1px solid var(--border-color); border-radius: 20px;
+      background: var(--bg-color); color: var(--text-main); font-family: inherit;
+      transition: var(--transition); outline: none;
+    }
+    .search-input:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1); }
+
+    .topbar-right { display: flex; align-items: center; gap: 1rem; }
+    .theme-toggle { background: none; border: none; color: var(--text-muted); font-size: 1.25rem; cursor: pointer; transition: var(--transition); }
+    .theme-toggle:hover { color: var(--primary-color); }
+
+    /* Sidebar */
+    .sidebar {
+      position: fixed; top: var(--topbar-height); left: 0; bottom: 0;
+      width: var(--sidebar-width); background: var(--surface-color);
+      border-right: 1px solid var(--border-color); overflow-y: auto;
+      padding: 1.5rem 0; z-index: 90; transition: transform 0.3s ease;
+    }
+    .nav-list { list-style: none; margin: 0; }
+    .nav-item { padding: 0.25rem 1.5rem; }
+    .nav-link { 
+      display: block; padding: 0.5rem 0.75rem; color: var(--text-muted);
+      border-radius: 6px; font-weight: 500; font-size: 0.95rem; text-decoration: none;
+    }
+    .nav-link:hover, .nav-link.active {
+      background: rgba(16, 185, 129, 0.1); color: var(--primary-color); text-decoration: none;
+    }
+
+    /* Main Content */
+    .main-wrapper {
+      margin-top: var(--topbar-height); margin-left: var(--sidebar-width);
+      flex: 1; overflow-y: auto; scroll-behavior: smooth;
+      display: flex; flex-direction: column;
+    }
+    .content { padding: 3rem 4rem; max-width: 1200px; margin: 0 auto; flex: 1; width: 100%; }
+
+    /* Copy Button */
+    .copy-btn {
+      position: absolute; top: 0.5rem; right: 0.5rem;
+      background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+      color: #cbd5e1; padding: 0.4rem 0.6rem; border-radius: 4px;
+      cursor: pointer; font-size: 0.8rem; transition: var(--transition);
+      display: flex; align-items: center; gap: 0.4rem;
+    }
+    .copy-btn:hover { background: rgba(255,255,255,0.2); color: #fff; }
+
+    /* Tables */
+    .table-container { overflow-x: auto; margin-bottom: 2rem; border-radius: 8px; box-shadow: var(--shadow); position: relative; }
+    table { width: 100%; border-collapse: collapse; background: var(--surface-color); text-align: left; }
+    th, td { padding: 1rem; border-bottom: 1px solid var(--border-color); }
+    th { background: rgba(128,128,128,0.05); font-weight: 600; color: var(--text-main); position: sticky; top: 0; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover { background: rgba(128,128,128,0.02); }
+    
+    .table-toggle {
+      display: block; width: 100%; padding: 0.75rem; text-align: center;
+      background: rgba(128,128,128,0.05); border: none; border-top: 1px solid var(--border-color);
+      color: var(--primary-color); font-weight: 500; cursor: pointer; transition: var(--transition);
+    }
+    .table-toggle:hover { background: rgba(16, 185, 129, 0.1); }
+    .table-collapsed tbody tr:nth-child(n+6) { display: none; }
+
+    /* Footer */
+    .footer {
+      padding: 2rem 4rem; text-align: center; border-top: 1px solid var(--border-color);
+      color: var(--text-muted); font-size: 0.9rem; background: var(--surface-color); margin-top: auto;
+    }
+
+    /* Tooltip */
+    .tooltip {
+      position: absolute; background: #334155; color: #fff; padding: 0.4rem 0.8rem;
+      border-radius: 4px; font-size: 0.8rem; pointer-events: none; opacity: 0;
+      transition: opacity 0.2s; z-index: 1000; transform: translateY(-10px);
+    }
+    .tooltip.show { opacity: 1; transform: translateY(0); }
+
+    /* Highlights for search */
+    .highlight { background-color: rgba(234, 179, 8, 0.4); border-radius: 2px; }
+
+    /* Responsive */
+    @media (max-width: 992px) {
+      .content { padding: 2rem; }
+      .search-container { max-width: 300px; }
+    }
+    @media (max-width: 768px) {
+      .menu-toggle { display: block; }
+      .sidebar { transform: translateX(-100%); }
+      .sidebar.open { transform: translateX(0); }
+      .main-wrapper { margin-left: 0; }
+      .search-container { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Topbar -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="menu-toggle" id="menuToggle"><i class="fas fa-bars"></i></button>
+      <div class="brand"><i class="fas fa-microchip text-primary" style="color:var(--primary-color)"></i> Sentaurus Device</div>
+    </div>
+    
+    <div class="search-container">
+      <i class="fas fa-search search-icon"></i>
+      <input type="text" class="search-input" id="searchInput" placeholder="Search commands, physics, math...">
+    </div>
+
+    <div class="topbar-right">
+      <button class="theme-toggle" id="themeToggle" title="Toggle Dark/Light Mode">
+        <i class="fas fa-moon"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <ul class="nav-list">
+      <li class="nav-item"><a href="#getting-started" class="nav-link">Getting Started</a></li>
+      <li class="nav-item"><a href="#specifying-devices" class="nav-link">Specifying Physical Devices</a></li>
+      <li class="nav-item"><a href="#mixed-mode" class="nav-link">Mixed-Mode Simulations</a></li>
+      <li class="nav-item"><a href="#numeric-experiments" class="nav-link">Performing Numeric Experiments</a></li>
+      <li class="nav-item"><a href="#simulation-results" class="nav-link">Simulation Results</a></li>
+      <li class="nav-item"><a href="#numeric-issues" class="nav-link">Numeric & Software Issues</a></li>
+      <li class="nav-item"><a href="#physics" class="nav-link">Physics in Sentaurus Device</a></li>
+      <li class="nav-item"><a href="#pmi" class="nav-link">Numeric Methods & PMI</a></li>
+      <li class="nav-item"><a href="#appendices" class="nav-link">Appendices</a></li>
+    </ul>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-wrapper" id="mainWrapper">
+    <div class="content" id="contentArea">
+      
+      <h1>Sentaurus Device User Guide</h1>
+      <p>Reference guide for Sentaurus Device (Version T-2022.03). This document covers starting the tool, defining physics, solving equations, mixed-mode simulation, and key numeric parameters.</p>
+
+      <section id="getting-started" class="section">
+        <h2>Getting Started</h2>
+        <h3>Overview & Functionality</h3>
+        <p>Sentaurus Device is an advanced 1D, 2D, and 3D device simulator capable of modeling the electrical, thermal, and optical characteristics of semiconductor devices. It supports single/multiple devices, mixed-mode circuit simulation, nonvolatile memory, hydrodynamic transport, and thermodynamic models.</p>
+        
+        <h3>Starting Sentaurus Device</h3>
+        <p>To run a simulation from the command line, provide the command filename:</p>
+        <pre><button class="copy-btn"><i class="far fa-copy"></i> Copy</button><code>sdevice my_device.cmd
+sdevice -P my_device.cmd  # Preprocess macro parsing
+sdevice -ver              # Print version
+sdevice -h                # Print help</code></pre>
+      </section>
+
+      <section id="specifying-devices" class="section">
+        <h2>Specifying Physical Devices</h2>
+        
+        <h3>Reading a Structure</h3>
+        <p>The mesh and doping profile are typically generated by Sentaurus Structure Editor or Sentaurus Process and loaded via the <code>File</code> section:</p>
+        <pre><button class="copy-btn"><i class="far fa-copy"></i> Copy</button><code>File {
+  Grid      = "mosfet_msh.tdr"
+  Parameter = "models.par"
+}</code></pre>
+        <p>You can adjust dimensions using <code>AreaFactor</code> or specify a <code>CoordinateSystem</code> (e.g., <code>Cylindrical</code>).</p>
+
+        <h3>Doping & Materials</h3>
+        <p>Regions are defined in the <code>.tdr</code> file. Materials are evaluated hierarchically. If a material is not built-in, you can specify user-defined mole fraction materials (e.g., <code>Molefraction.txt</code>) or map them via <code>datexcodes.txt</code>.</p>
+
+        <h3>Physics Model Hierarchy</h3>
+        <p>Sentaurus Device applies physical models in a strict hierarchy:</p>
+        <ol>
+          <li>Global (applies to all regions)</li>
+          <li>Material-specific</li>
+          <li>Region-specific</li>
+          <li>Interface-specific</li>
+          <li>Electrode-specific</li>
+        </ol>
+        <pre><button class="copy-btn"><i class="far fa-copy"></i> Copy</button><code>Physics {
+  # Global models
+  Mobility( DopingDependence HighFieldSaturation )
+  Recombination( SRH Auger )
+}
+Physics (Material="Silicon") {
+  # Material-specific models
+  Bandgap( Slotboom )
+}</code></pre>
+      </section>
+
+      <section id="mixed-mode" class="section">
+        <h2>Mixed-Mode Simulations</h2>
+        <p>Mixed-mode allows coupling rigorous TCAD device models with SPICE/PrimeSim HSPICE compact models in a circuit simulation.</p>
+
+        <h3>System Section</h3>
+        <p>The <code>System</code> section defines the circuit netlist, instantiated devices, and connections.</p>
+        <pre><button class="copy-btn"><i class="far fa-copy"></i> Copy</button><code>System {
+  # Instantiate a TCAD device
+  MOSFET nmos (gate=g drain=d source=s bulk=0)
+  
+  # SPICE elements
+  Vsource_pset vdd (d 0) { dc = 5.0 }
+  Vsource_pset vgg (g 0) { dc = 0.0 }
+  Resistor_pset rload (d vdd) { resistance = 1e4 }
+}</code></pre>
+
+        <h3>Device & Math Sections in Mixed-Mode</h3>
+        <p>The <code>Device</code> section acts as a wrapper for the individual TCAD device definitions (containing its own <code>File</code>, <code>Physics</code>, and <code>Electrode</code> sections).</p>
+      </section>
+
+      <section id="numeric-experiments" class="section">
+        <h2>Performing Numeric Experiments</h2>
+        
+        <h3>Boundary Conditions</h3>
+        <p>Defined in the <code>Electrode</code> block. Supports Ohmic (default), Schottky (specify WorkFunction), floating, and resistive/distributed contacts.</p>
+        <pre><button class="copy-btn"><i class="far fa-copy"></i> Copy</button><code>Electrode {
+  { Name="gate" Voltage=0.0 WorkFunction=4.6 }
+  { Name="drain" Voltage=0.0 Resistor=100 }
+}</code></pre>
+
+        <h3>Solve Commands</h3>
+        <p>The <code>Solve</code> section orchestrates the numerical experiment (DC sweeps, transients, AC).</p>
+        <div class="table-container table-collapsed">
+          <table class="filterable-table">
+            <thead>
+              <tr><th style="width: 25%;">Command</th><th>Description</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>Coupled { ... }</code></td><td>Solves equations simultaneously (e.g., Poisson, Electron, Hole).</td></tr>
+              <tr><td><code>Quasistationary ( ... )</code></td><td>Performs a DC bias sweep, ramping a voltage or parameter.</td></tr>
+              <tr><td><code>Transient ( ... )</code></td><td>Performs a time-dependent simulation (e.g., pulse response).</td></tr>
+              <tr><td><code>ACCoupled ( ... )</code></td><td>Performs small-signal AC analysis at a specific DC bias.</td></tr>
+              <tr><td><code>HBCoupled ( ... )</code></td><td>Harmonic Balance for large-signal RF steady-state.</td></tr>
+              <tr><td><code>Save (FilePrefix="name")</code></td><td>Saves the current state to a .tdr and .plt file.</td></tr>
+              <tr><td><code>Load (FilePrefix="name")</code></td><td>Loads a previously saved state.</td></tr>
+            </tbody>
+          </table>
+          <button class="table-toggle">Show more</button>
+        </div>
+
+        <h3>Example: DC Sweep</h3>
+        <pre><button class="copy-btn"><i class="far fa-copy"></i> Copy</button><code>Solve {
+  # Initial guess
+  Coupled (Iterations=100) { Poisson }
+  Coupled { Poisson Electron Hole }
+  
+  # Ramp Drain
+  Quasistationary (
+    Goal { Name="drain" Voltage=5.0 }
+    InitialStep=0.1 MaxStep=0.5 MinStep=1e-4
+  ) { Coupled { Poisson Electron Hole } }
+}</code></pre>
+      </section>
+
+      <section id="simulation-results" class="section">
+        <h2>Simulation Results</h2>
+        <p>Specify what is written to output files in the <code>CurrentPlot</code> (for .plt) and <code>Plot</code> (for .tdr) sections.</p>
+        
+        <div class="table-container table-collapsed">
+          <table class="filterable-table">
+            <thead>
+              <tr><th style="width: 25%;">Plot Keyword</th><th>Physical Quantity</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>eDensity / hDensity</code></td><td>Electron and hole concentrations (cm⁻³).</td></tr>
+              <tr><td><code>Potential</code></td><td>Electrostatic potential (V).</td></tr>
+              <tr><td><code>ElectricField</code></td><td>Electric field vector (V/cm).</td></tr>
+              <tr><td><code>eMobility / hMobility</code></td><td>Carrier mobilities (cm²/Vs).</td></tr>
+              <tr><td><code>CurrentDensity</code></td><td>Total current density vector.</td></tr>
+              <tr><td><code>ConductionBandEnergy</code></td><td>Ec in eV.</td></tr>
+              <tr><td><code>LatticeTemperature</code></td><td>Lattice temperature in K (requires Thermodynamic model).</td></tr>
+              <tr><td><code>eTrappedCharge</code></td><td>Electron charge trapped at interfaces or bulk defects.</td></tr>
+            </tbody>
+          </table>
+          <button class="table-toggle">Show more</button>
+        </div>
+      </section>
+
+      <section id="numeric-issues" class="section">
+        <h2>Numeric & Software Issues</h2>
+        <p>The <code>Math</code> section controls the numeric solvers. Use <code>Extrapolate</code> to speed up sweeps by guessing the next solution based on the previous two steps.</p>
+        
+        <div class="table-container table-collapsed">
+          <table class="filterable-table">
+            <thead>
+              <tr><th style="width: 25%;">Math Keyword</th><th>Description</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>Method = Blocked / ILS</code></td><td>Specifies the linear solver (Blocked, ILS, PARDISO, Super).</td></tr>
+              <tr><td><code>Iterations = 20</code></td><td>Maximum number of Newton iterations per solve step.</td></tr>
+              <tr><td><code>Extrapolate</code></td><td>Enables polynomial extrapolation for initial guesses during sweeps.</td></tr>
+              <tr><td><code>Number_of_Threads</code></td><td>Enables SMP parallelization (e.g., <code>Number_of_Threads = 8</code>).</td></tr>
+              <tr><td><code>RelErrControl</code></td><td>Enables relative error control (useful for low currents).</td></tr>
+              <tr><td><code>Transient = TRBDF</code></td><td>Specifies the transient integration method (TRBDF or BackwardEuler).</td></tr>
+            </tbody>
+          </table>
+          <button class="table-toggle">Show more</button>
+        </div>
+      </section>
+
+      <section id="physics" class="section">
+        <h2>Physics in Sentaurus Device</h2>
+        <p>Sentaurus Device solves the fundamental semiconductor equations: the Poisson equation and the continuity equations for electrons and holes.</p>
+        <ul>
+          <li><strong>Carrier Transport:</strong> Supports Drift-Diffusion (default), Thermodynamic (includes temperature gradients), and Hydrodynamic (carrier energy conservation).</li>
+          <li><strong>Mobility Models:</strong> 
+            <ul>
+              <li><code>DopingDependence</code> (Masetti/Arora)</li>
+              <li><code>HighFieldSaturation</code> (Canali)</li>
+              <li><code>Enormal</code> (Lombardi) for surface scattering</li>
+            </ul>
+          </li>
+          <li><strong>Generation/Recombination:</strong> Includes SRH (doping and field-dependent), Auger, Avalanche (UniBo/VanOverstraeten), and Band-to-Band Tunneling (Hurkx/Dynamic/NonLocal).</li>
+          <li><strong>Quantum Confinement:</strong> MLDA (Modified Local Density Approximation), eDensity/hDensity Schroedinger, Density Gradient.</li>
+          <li><strong>Traps:</strong> Interface and bulk traps defined with discrete or continuous energy distributions (Gaussian, Exponential).</li>
+        </ul>
+      </section>
+
+      <section id="pmi" class="section">
+        <h2>Numeric Methods & PMI</h2>
+        <p>The <strong>Physical Model Interface (PMI)</strong> allows users to write custom C++ models (e.g., custom mobility or recombination models) and link them dynamically to Sentaurus Device at runtime without needing the source code of the simulator.</p>
+        <p>Equations are discretized using the Box Method on spatial grids, generating sparse linear systems solved by highly optimized direct (PARDISO, Super) or iterative (ILS) solvers.</p>
+      </section>
+
+      <section id="appendices" class="section">
+        <h2>Appendices</h2>
+        <h3>Key Command-Line Options</h3>
+        <div class="table-container table-collapsed">
+          <table class="filterable-table">
+            <thead>
+              <tr><th style="width: 25%;">Flag</th><th>Description</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>-h</code></td><td>Prints help and usage information.</td></tr>
+              <tr><td><code>-P</code></td><td>Enables macro preprocessing in the command file.</td></tr>
+              <tr><td><code>-n &lt;node&gt;</code></td><td>Specifies a node number for Sentaurus Workbench execution.</td></tr>
+              <tr><td><code>--threads &lt;n&gt;</code></td><td>Overrides the Math section to use <i>n</i> parallel threads.</td></tr>
+            </tbody>
+          </table>
+          <button class="table-toggle">Show more</button>
+        </div>
+      </section>
+
+    </div>
+    
+    <footer class="footer">
+      <div>Sentaurus Device Reference Guide (Based on Synopsys Sentaurus Device T-2022.03 documentation)</div>
+      <div style="margin-top: 0.5rem;">
+        <a href="https://www.synopsys.com/silicon/tcad.html" target="_blank" rel="nofollow">Visit Synopsys TCAD</a>
+      </div>
+    </footer>
+  </main>
+
+  <!-- Global Tooltip for copying -->
+  <div id="copyTooltip" class="tooltip">Copied!</div>
+
+  <script>
+    // --- Dark/Light Theme Toggle ---
+    const themeToggle = document.getElementById('themeToggle');
+    const htmlEl = document.documentElement;
+    
+    // Check saved theme or system preference
+    const savedTheme = localStorage.getItem('sdevice-theme');
+    if (savedTheme) {
+      htmlEl.setAttribute('data-theme', savedTheme);
+      updateThemeIcon(savedTheme);
+    } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      htmlEl.setAttribute('data-theme', 'dark');
+      updateThemeIcon('dark');
+    }
+
+    themeToggle.addEventListener('click', () => {
+      const current = htmlEl.getAttribute('data-theme');
+      const next = current === 'dark' ? 'light' : 'dark';
+      htmlEl.setAttribute('data-theme', next);
+      localStorage.setItem('sdevice-theme', next);
+      updateThemeIcon(next);
+    });
+
+    function updateThemeIcon(theme) {
+      themeToggle.innerHTML = theme === 'dark' ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+    }
+
+    // --- Sidebar Mobile Toggle ---
+    const menuToggle = document.getElementById('menuToggle');
+    const sidebar = document.getElementById('sidebar');
+    
+    menuToggle.addEventListener('click', () => {
+      sidebar.classList.toggle('open');
+    });
+
+    document.querySelectorAll('.nav-link').forEach(link => {
+      link.addEventListener('click', () => {
+        if (window.innerWidth <= 768) {
+          sidebar.classList.remove('open');
+        }
+      });
+    });
+
+    // --- Scrollspy (Highlight TOC) ---
+    const sections = document.querySelectorAll('.section');
+    const navLinks = document.querySelectorAll('.nav-link');
+    const mainWrapper = document.getElementById('mainWrapper');
+
+    mainWrapper.addEventListener('scroll', () => {
+      let current = '';
+      const offset = 100;
+      
+      sections.forEach(sec => {
+        const sectionTop = sec.offsetTop;
+        if (mainWrapper.scrollTop >= sectionTop - offset) {
+          current = sec.getAttribute('id');
+        }
+      });
+
+      navLinks.forEach(link => {
+        link.classList.remove('active');
+        if (link.getAttribute('href').substring(1) === current) {
+          link.classList.add('active');
+        }
+      });
+    });
+
+    // --- Copy to Clipboard (Code blocks) ---
+    document.querySelectorAll('.copy-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const code = e.target.closest('pre').querySelector('code').innerText;
+        navigator.clipboard.writeText(code).then(() => {
+          const origText = btn.innerHTML;
+          btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+          setTimeout(() => btn.innerHTML = origText, 2000);
+        });
+      });
+    });
+
+    // --- Table Collapse/Expand ---
+    document.querySelectorAll('.table-toggle').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const container = e.target.closest('.table-container');
+        if(container.classList.contains('table-collapsed')) {
+          container.classList.remove('table-collapsed');
+          e.target.innerText = 'Show less';
+        } else {
+          container.classList.add('table-collapsed');
+          e.target.innerText = 'Show more';
+        }
+      });
+    });
+
+    // --- Search / Filter ---
+    const searchInput = document.getElementById('searchInput');
+    const tables = document.querySelectorAll('.filterable-table');
+
+    function debounce(func, wait) {
+      let timeout;
+      return function(...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), wait);
+      };
+    }
+
+    searchInput.addEventListener('input', debounce((e) => {
+      const term = e.target.value.toLowerCase();
+      
+      tables.forEach(table => {
+        const rows = table.querySelectorAll('tbody tr');
+        let visibleCount = 0;
+        
+        rows.forEach(row => {
+          const text = row.innerText.toLowerCase();
+          if (text.includes(term)) {
+            row.style.display = '';
+            visibleCount++;
+          } else {
+            row.style.display = 'none';
+          }
+        });
+
+        const container = table.closest('.table-container');
+        const toggleBtn = container.querySelector('.table-toggle');
+        
+        // Auto-expand table if searching, collapse if empty
+        if (term.length > 0) {
+          container.classList.remove('table-collapsed');
+          if(toggleBtn) toggleBtn.style.display = 'none';
+        } else {
+          container.classList.add('table-collapsed');
+          if(toggleBtn) toggleBtn.style.display = 'block';
+        }
+      });
+    }, 300));
+
+  </script>
+</body>
+</html>

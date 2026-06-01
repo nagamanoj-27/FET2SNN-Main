@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FET2SNN – Model Cards (Restricted Access)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg: #080d18;
+            --card: #0e1422;
+            --card2: #111827;
+            --border: #1e2d45;
+            --accent: #3a86ff;
+            --green: #4caf50;
+            --amber: #f59e0b;
+            --violet: #8b5cf6;
+            --magenta: #d946ef;
+            --cyan: #06b6d4;
+            --red: #ef4444;
+            --text: #e2e8f0;
+            --muted: #94a3b8;
+            --mono: 'Fira Code', monospace;
+            --sans: 'Inter', sans-serif;
+        }
+        body {
+            background: var(--bg);
+            font-family: var(--sans);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 0;
+        }
+
+        /* ── Auth Screen ── */
+        .auth-screen {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(circle at 30% 40%, rgba(58,134,255,.08) 0%, transparent 60%),
+                        radial-gradient(circle at 80% 70%, rgba(139,92,246,.06) 0%, transparent 60%),
+                        var(--bg);
+        }
+        .auth-box {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 40px 44px;
+            text-align: center;
+            max-width: 420px;
+            width: 90%;
+            box-shadow: 0 25px 60px rgba(0,0,0,.6);
+        }
+        .auth-icon { font-size: 3rem; margin-bottom: 12px; }
+        .auth-title { font-size: 1.4rem; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+        .auth-sub   { font-size: 0.85rem; color: var(--muted); margin-bottom: 24px; line-height: 1.6; }
+        .auth-input {
+            width: 100%;
+            background: #0a101e;
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: 40px;
+            padding: 12px 20px;
+            font-size: 1rem;
+            font-family: var(--mono);
+            text-align: center;
+            letter-spacing: 2px;
+            outline: none;
+            transition: border-color .2s;
+        }
+        .auth-input:focus { border-color: var(--accent); }
+        .auth-btn {
+            margin-top: 16px;
+            background: linear-gradient(135deg, var(--accent), var(--violet));
+            border: none;
+            color: white;
+            padding: 10px 30px;
+            border-radius: 40px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity .2s;
+        }
+        .auth-btn:hover { opacity: .88; }
+        .auth-error { color: #ff8866; margin-top: 12px; font-size: .85rem; min-height: 18px; }
+        .auth-hint  { font-size: .75rem; color: var(--muted); margin-top: 18px; line-height: 1.6; opacity: .7; }
+
+        /* ── Main Layout ── */
+        .page { display: none; }
+        .page.visible { display: block; animation: fadeIn .4s ease; }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; } }
+
+        .top-bar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(8,13,24,.95);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            padding: 12px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .top-bar-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .top-bar-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .tb-btn {
+            background: rgba(30,45,69,.8);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: .8rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: background .2s, border-color .2s;
+        }
+        .tb-btn:hover { background: rgba(58,134,255,.15); border-color: var(--accent); }
+        .tb-btn.logout { border-color: #8a3a2c; color: #ff8888; }
+        .tb-btn.logout:hover { background: rgba(138,58,44,.2); }
+
+        /* ── TOC Sidebar ── */
+        .layout { display: flex; gap: 0; }
+        .toc {
+            width: 240px;
+            min-width: 200px;
+            position: sticky;
+            top: 57px;
+            height: calc(100vh - 57px);
+            overflow-y: auto;
+            padding: 20px 16px;
+            background: rgba(14,20,34,.6);
+            border-right: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+        .toc-title { font-size: .7rem; font-weight: 700; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 12px; }
+        .toc a {
+            display: block;
+            padding: 5px 10px;
+            font-size: .78rem;
+            color: var(--muted);
+            text-decoration: none;
+            border-radius: 6px;
+            margin-bottom: 2px;
+            line-height: 1.4;
+            transition: background .15s, color .15s;
+        }
+        .toc a:hover { background: rgba(58,134,255,.1); color: var(--accent); }
+        .toc a.sub { padding-left: 20px; font-size: .73rem; opacity: .8; }
+
+        /* ── Content ── */
+        .content { flex: 1; padding: 32px 36px 80px; max-width: 980px; }
+
+        /* section cards */
+        .section { margin-bottom: 40px; }
+        .section-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 18px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .section-title .icon { font-size: 1.1rem; }
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 22px 24px;
+            margin-bottom: 18px;
+            position: relative;
+        }
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            border-radius: 14px 14px 0 0;
+            background: linear-gradient(90deg, transparent, var(--card-accent, var(--accent)), transparent);
+            opacity: .4;
+        }
+        .card.green  { --card-accent: var(--green); }
+        .card.amber  { --card-accent: var(--amber); }
+        .card.violet { --card-accent: var(--violet); }
+        .card.cyan   { --card-accent: var(--cyan); }
+        .card.magenta{ --card-accent: var(--magenta); }
+        .card.red    { --card-accent: var(--red); }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .badge {
+            font-size: .7rem;
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+            display: inline-block;
+        }
+        .badge-blue   { background: rgba(58,134,255,.18);  color: #7ab3ff; border: 1px solid rgba(58,134,255,.3); }
+        .badge-green  { background: rgba(76,175,80,.18);   color: #7dd87f; border: 1px solid rgba(76,175,80,.3); }
+        .badge-amber  { background: rgba(245,158,11,.18);  color: #fbbf61; border: 1px solid rgba(245,158,11,.3); }
+        .badge-violet { background: rgba(139,92,246,.18);  color: #c4b0ff; border: 1px solid rgba(139,92,246,.3); }
+        .badge-cyan   { background: rgba(6,182,212,.18);   color: #67e8f9; border: 1px solid rgba(6,182,212,.3); }
+        .badge-red    { background: rgba(239,68,68,.18);   color: #fca5a5; border: 1px solid rgba(239,68,68,.3); }
+
+        /* equation box */
+        .eq-box {
+            background: #07101f;
+            border: 1px solid rgba(58,134,255,.2);
+            border-radius: 10px;
+            padding: 18px 20px;
+            margin: 14px 0;
+            overflow-x: auto;
+            text-align: center;
+            font-size: 1.05rem;
+        }
+        .eq-label {
+            font-family: var(--mono);
+            font-size: .7rem;
+            color: var(--muted);
+            text-align: right;
+            margin-top: 6px;
+        }
+
+        /* code block */
+        .code-block {
+            background: #060e1c;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px 18px;
+            font-family: var(--mono);
+            font-size: .82rem;
+            overflow-x: auto;
+            line-height: 1.7;
+            color: #a8c5ff;
+            margin: 12px 0;
+        }
+        .code-block .kw  { color: #c792ea; }
+        .code-block .fn  { color: #82aaff; }
+        .code-block .str { color: #c3e88d; }
+        .code-block .cm  { color: #546e7a; font-style: italic; }
+        .code-block .num { color: #f78c6c; }
+
+        /* param table */
+        table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+        th {
+            background: rgba(20,30,55,.9);
+            color: var(--muted);
+            font-size: .72rem;
+            text-transform: uppercase;
+            letter-spacing: .8px;
+            padding: 8px 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        td { padding: 8px 12px; border-bottom: 1px solid rgba(30,45,69,.5); vertical-align: top; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: rgba(58,134,255,.04); }
+        td.mono { font-family: var(--mono); font-size: .8rem; color: #82aaff; }
+        td.num  { font-family: var(--mono); font-size: .8rem; color: #f78c6c; }
+
+        p { color: var(--muted); line-height: 1.75; margin-bottom: 10px; font-size: .9rem; }
+        ul, ol { padding-left: 20px; color: var(--muted); font-size: .9rem; line-height: 1.8; }
+        li { margin-bottom: 4px; }
+        strong { color: var(--text); font-weight: 600; }
+        code { font-family: var(--mono); font-size: .82em; color: #82aaff; background: rgba(58,134,255,.08); padding: 1px 5px; border-radius: 4px; }
+
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
+        @media(max-width:700px) { .info-grid { grid-template-columns: 1fr; } }
+        .info-item { background: var(--card2); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+        .info-item-label { font-size: .7rem; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 4px; }
+        .info-item-value { font-family: var(--mono); font-size: .9rem; color: var(--cyan); }
+
+        .flow-step {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(30,45,69,.5);
+        }
+        .flow-step:last-child { border-bottom: none; }
+        .flow-num {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), var(--violet));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: .75rem;
+            font-weight: 700;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+        .flow-text { flex: 1; }
+        .flow-title { font-weight: 600; color: var(--text); margin-bottom: 3px; font-size: .9rem; }
+        .flow-desc  { font-size: .82rem; color: var(--muted); line-height: 1.6; }
+
+        .chip-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+        .chip {
+            font-size: .75rem;
+            padding: 3px 12px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            font-family: var(--mono);
+        }
+
+        footer {
+            text-align: center;
+            font-size: .78rem;
+            color: var(--muted);
+            opacity: .6;
+            padding: 30px 0 10px;
+            border-top: 1px solid var(--border);
+            margin-top: 30px;
+        }
+
+        @media(max-width:900px) {
+            .toc { display: none; }
+            .content { padding: 20px 18px 60px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ═══════════════════════ AUTH SCREEN ═══════════════════════ -->
+<div id="authScreen" class="auth-screen">
+    <div class="auth-box">
+        <div class="auth-icon">🔐</div>
+        <div class="auth-title">Restricted Access</div>
+        <div class="auth-sub">This page contains proprietary device physics models, calibration coefficients, SNN training data, and internal equations. Authorised personnel only.</div>
+        <input type="password" id="passwordInput" class="auth-input" placeholder="Enter password" autocomplete="off">
+        <div><button id="unlockBtn" class="auth-btn">🔓 Unlock Model Cards</button></div>
+        <div id="authError" class="auth-error"></div>
+        <div class="auth-hint">Session is remembered in your browser. Contact the FET2SNN team for access credentials.</div>
+    </div>
+</div>
+
+<!-- ═══════════════════════ MAIN PAGE ═══════════════════════ -->
+<div id="mainPage" class="page">
+
+    <!-- Top bar -->
+    <div class="top-bar">
+        <div class="top-bar-title">📄 FET2SNN – Model Cards v2.1</div>
+        <div class="top-bar-actions">
+            <a href="index.html" class="tb-btn">← Back to Tool</a>
+            <button id="logoutBtn" class="tb-btn logout">🚪 Logout</button>
+        </div>
+    </div>
+
+    <div class="layout">
+
+        <!-- TOC -->
+        <nav class="toc">
+            <div class="toc-title">Contents</div>
+            <a href="#s0">How the Website Works</a>
+            <a href="#s0a" class="sub">Architecture</a>
+            <a href="#s0b" class="sub">Data Flow</a>
+            <a href="#s1">Input Parameters</a>
+            <a href="#s2">Device Physics Engine</a>
+            <a href="#s2a" class="sub">Effective Width</a>
+            <a href="#s2b" class="sub">Oxide Capacitance</a>
+            <a href="#s2c" class="sub">Threshold Voltage</a>
+            <a href="#s2d" class="sub">Subthreshold Swing</a>
+            <a href="#s2e" class="sub">DIBL</a>
+            <a href="#s2f" class="sub">Effective Mobility</a>
+            <a href="#s2g" class="sub">On-Current</a>
+            <a href="#s2h" class="sub">Off-Current</a>
+            <a href="#s2i" class="sub">gm & gds</a>
+            <a href="#s3">Temperature Models</a>
+            <a href="#s4">Process Corner Scaling</a>
+            <a href="#s5">SNN Predictor</a>
+            <a href="#s6">Graph Generation</a>
+            <a href="#s6a" class="sub">Transfer Curve</a>
+            <a href="#s6b" class="sub">Output Characteristic</a>
+            <a href="#s6c" class="sub">Parametric Sweeps</a>
+            <a href="#s6d" class="sub">Band Diagram</a>
+            <a href="#s6e" class="sub">Raster Plot</a>
+            <a href="#s7">3D TCAD LiveView</a>
+            <a href="#s8">Calibration Database</a>
+            <a href="#s9">Limitations</a>
+        </nav>
+
+        <!-- Content -->
+        <div class="content">
+
+            <!-- ── S0: How the website works ── -->
+            <div class="section" id="s0">
+                <div class="section-title"><span class="icon">🌐</span> How the Website Works</div>
+
+                <div class="card" id="s0a">
+                    <div class="card-title">Architecture Overview</div>
+                    <p>FET2SNN is a <strong>fully client-side, single-page application</strong> (SPA) built in pure HTML5, CSS3, and vanilla JavaScript — no backend server, no Python runtime, no API calls during use. All computation runs live in the browser using hand-coded analytical physics models.</p>
+                    <div class="info-grid">
+                        <div class="info-item"><div class="info-item-label">Runtime</div><div class="info-item-value">Browser JS (ES2020)</div></div>
+                        <div class="info-item"><div class="info-item-label">3D Renderer</div><div class="info-item-value">Three.js r128</div></div>
+                        <div class="info-item"><div class="info-item-label">Charts</div><div class="info-item-value">Chart.js 4.4</div></div>
+                        <div class="info-item"><div class="info-item-label">Math Rendering</div><div class="info-item-value">MathJax 3</div></div>
+                        <div class="info-item"><div class="info-item-label">Fonts</div><div class="info-item-value">Google Fonts (Outfit, Inter, Fira Code)</div></div>
+                        <div class="info-item"><div class="info-item-label">PDF Export</div><div class="info-item-value">jsPDF + html2canvas</div></div>
+                    </div>
+                </div>
+
+                <div class="card" id="s0b">
+                    <div class="card-title">Data Flow — Every Slider Move</div>
+                    <div class="flow-step">
+                        <div class="flow-num">1</div>
+                        <div class="flow-text">
+                            <div class="flow-title">User moves a slider</div>
+                            <div class="flow-desc">An <code>input</code> event fires on the range element. The global state object <code>S</code> is updated with the new value (e.g., <code>S.Lg = 12</code>). The paired number input is also synced.</div>
+                        </div>
+                    </div>
+                    <div class="flow-step">
+                        <div class="flow-num">2</div>
+                        <div class="flow-text">
+                            <div class="flow-title"><code>computeAll()</code> is called</div>
+                            <div class="flow-desc">This master function orchestrates the full pipeline: device physics → SNN prediction → all chart updates → 3D model rebuild → band diagram → raster plot. Everything runs synchronously in &lt; 5 ms on modern hardware.</div>
+                        </div>
+                    </div>
+                    <div class="flow-step">
+                        <div class="flow-num">3</div>
+                        <div class="flow-text">
+                            <div class="flow-title"><code>computeDevice(S)</code> → FET parameters</div>
+                            <div class="flow-desc">Runs the full analytical physics engine (see §2). Returns an object with Weff, Cox, Vth, SS, DIBL, µeff, Ion, Ioff, gm, gds, Vov, β.</div>
+                        </div>
+                    </div>
+                    <div class="flow-step">
+                        <div class="flow-num">4</div>
+                        <div class="flow-text">
+                            <div class="flow-title"><code>computeSNN(d, S)</code> → neuromorphic metrics</div>
+                            <div class="flow-desc">Feeds the device parameters into the LightGBM-surrogate linear model. Returns Energy/spike (fJ), Inference Latency (ms), SNN Accuracy (%).</div>
+                        </div>
+                    </div>
+                    <div class="flow-step">
+                        <div class="flow-num">5</div>
+                        <div class="flow-text">
+                            <div class="flow-title">All 11 charts update in-place</div>
+                            <div class="flow-desc">Chart.js datasets are replaced and <code>.update()</code> is called with <code>animation.duration = 0</code> (instant re-render) for real-time responsiveness.</div>
+                        </div>
+                    </div>
+                    <div class="flow-step">
+                        <div class="flow-num">6</div>
+                        <div class="flow-text">
+                            <div class="flow-title">Three.js model rebuilds</div>
+                            <div class="flow-desc"><code>window.update3DModel()</code> tears down the previous <code>deviceGroup</code>, creates fresh geometries scaled to the current Lg, Wns, Tns, Nstacks values, and adds them back to the scene. The animation loop rerenders at ~60 fps.</div>
+                        </div>
+                    </div>
+                    <div class="flow-step">
+                        <div class="flow-num">7</div>
+                        <div class="flow-text">
+                            <div class="flow-title">Band diagram & raster update</div>
+                            <div class="flow-desc"><code>updateBandDiagram(Vth, Vdd)</code> redraws the Canvas 2D band structure. <code>updateRasterParams(E, L)</code> adjusts spike probability and dot size in the LIF neuron raster animation loop.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── S1: Inputs ── -->
+            <div class="section" id="s1">
+                <div class="section-title"><span class="icon">🎛️</span> Input Parameters</div>
+                <div class="card">
+                    <table>
+                        <thead><tr><th>ID</th><th>Parameter</th><th>Range</th><th>Default</th><th>Unit</th><th>Physical Meaning</th></tr></thead>
+                        <tbody>
+                            <tr><td class="mono">Lg</td><td>Gate Length</td><td class="num">8 – 16</td><td class="num">12</td><td>nm</td><td>Channel length under gate. Primary SCE driver.</td></tr>
+                            <tr><td class="mono">Wns</td><td>Nanosheet Width</td><td class="num">10 – 30</td><td class="num">20</td><td>nm</td><td>Width of each Si nanosheet ribbon.</td></tr>
+                            <tr><td class="mono">Tns</td><td>Nanosheet Thickness</td><td class="num">3 – 7</td><td class="num">5</td><td>nm</td><td>Vertical thickness. Governs quantum confinement correction.</td></tr>
+                            <tr><td class="mono">Nstacks</td><td>Number of Stacks</td><td class="num">1 – 4</td><td class="num">3</td><td>–</td><td>Stacked nanosheet count. Scales Weff and current.</td></tr>
+                            <tr><td class="mono">kSpacer</td><td>Spacer Dielectric κ</td><td class="num">1 – 39</td><td class="num">7</td><td>–</td><td>Relative permittivity of gate spacer material.</td></tr>
+                            <tr><td class="mono">EOT</td><td>Oxide Thickness (EOT)</td><td class="num">0.6 – 1.2</td><td class="num">0.8</td><td>nm</td><td>Equivalent oxide thickness. Scales Cox.</td></tr>
+                            <tr><td class="mono">Vdd</td><td>Supply Voltage</td><td class="num">0.5 – 1.1</td><td class="num">0.7</td><td>V</td><td>Drain bias Vds = Vgs = Vdd at on-state.</td></tr>
+                            <tr><td class="mono">T</td><td>Temperature</td><td class="num">25 – 125</td><td class="num">25</td><td>°C</td><td>Device operating temperature.</td></tr>
+                            <tr><td class="mono">ChMat</td><td>Channel Material</td><td colspan="2">Si / VP / BP / SiGe / InGaAs</td><td>–</td><td>Sets base mobility and flat-band voltage shift dVmat.</td></tr>
+                            <tr><td class="mono">SpArch</td><td>Spacer Architecture</td><td colspan="2">single / dual / triple</td><td>–</td><td>Arch factor (archF): 1.0 / 0.85 / 0.75. Reduces SCE.</td></tr>
+                            <tr><td class="mono">Corner</td><td>Process Corner</td><td colspan="2">TT / FF / SS</td><td>–</td><td>Scales Lg, Tns, Vth by ±5–10%.</td></tr>
+                            <tr><td class="mono">Nch</td><td>Channel Doping</td><td class="num">10¹⁵ – 10¹⁹</td><td class="num">10¹⁶</td><td>cm⁻³</td><td>Used in 3D colour-mapping only (does not alter analytical physics).</td></tr>
+                            <tr><td class="mono">NSD</td><td>S/D Doping</td><td class="num">10¹⁵ – 10²⁰</td><td class="num">10²⁰</td><td>cm⁻³</td><td>Controls S/D contact colour saturation in 3D viewer.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ── S2: Device Physics ── -->
+            <div class="section" id="s2">
+                <div class="section-title"><span class="icon">⚛️</span> Device Physics Engine — <code>computeDevice(S)</code></div>
+
+                <div class="card green" id="s2a">
+                    <div class="card-title"><span class="badge badge-green">Weff</span> Effective Gate Width</div>
+                    <div class="eq-box">\[ W_{\text{eff}} = N_{\text{stacks}} \times 2 \times (W_{ns} + T_{ns}) \quad \text{[nm]} \]</div>
+                    <div class="eq-label">Ref: Gate-all-around wrap-around perimeter model (TSMC / Samsung GAA)</div>
+                    <p>Each nanosheet contributes two flat faces (top + bottom) plus two thin side edges. The factor of 2 accounts for the full wraparound gate perimeter. Units: nm → converted to m internally via <code>Wm = Weff × 10⁻⁹</code>.</p>
+                </div>
+
+                <div class="card blue" id="s2b">
+                    <div class="card-title"><span class="badge badge-blue">Cox</span> Oxide Capacitance</div>
+                    <div class="eq-box">\[ C_{ox} = \frac{\varepsilon_0 \cdot 3.9}{\text{EOT}} = \frac{34.5}{\text{EOT}} \quad \text{[fF/μm²]} \]</div>
+                    <div class="eq-label">ε₀ = 8.854×10⁻¹² F/m · κ_SiO₂ = 3.9 → 34.5 fF/μm² at EOT = 1 nm</div>
+                    <p>Internally converted to SI: <code>Cox_Fm2 = Cox × 10⁻³</code> F/m².</p>
+                </div>
+
+                <div class="card violet" id="s2c">
+                    <div class="card-title"><span class="badge badge-violet">Vth</span> Threshold Voltage</div>
+                    <p>Built up from four additive components:</p>
+                    <div class="eq-box">
+                        \[ V_{th,25} = \underbrace{\left(0.3 + 0.02\frac{W_{ns}-20}{10} - 0.01(T_{ns}-5) + \Delta V_{mat}\right)}_{V_{th0}}
+                        + \underbrace{0.04\left(\frac{5}{T_{ns}}\right)^2}_{\Delta V_{QM}}
+                        + \underbrace{0.24\left(\frac{L_g}{12}-1\right) \cdot f_{arch}}_{\Delta V_{roll}}
+                        + \underbrace{0.002(k_{sp}-7) \cdot f_{arch}}_{\Delta V_{sp}} \]
+                    </div>
+                    <div class="eq-label">Sentaurus-calibrated SCE roll-off; Martino 2025 temperature correction; Aruna Kumari 2025 material shifts</div>
+                    <table style="margin-top:12px">
+                        <thead><tr><th>Term</th><th>Formula</th><th>Meaning</th></tr></thead>
+                        <tbody>
+                            <tr><td>Vth₀</td><td class="mono">0.3 + 0.02(Wns−20)/10 − 0.01(Tns−5) + ΔVmat</td><td>Nominal Vth at Lg=12, tuned to geometry</td></tr>
+                            <tr><td>ΔV_QM</td><td class="mono">0.04 · (5/Tns)²</td><td>Quantum confinement blue-shift (thinner sheet → higher Vth)</td></tr>
+                            <tr><td>ΔV_roll</td><td class="mono">0.24·(Lg/12−1)·archF</td><td>SCE roll-off (short channel → lower Vth)</td></tr>
+                            <tr><td>ΔV_sp</td><td class="mono">0.002·(κ−7)·archF</td><td>Spacer fringe field effect on Vth</td></tr>
+                        </tbody>
+                    </table>
+                    <div class="eq-box" style="margin-top:16px">\[ V_{th}(T) = V_{th,25} \cdot C_{\text{corner}} - \alpha(T-25), \quad \alpha = 0.0005\,\text{V/°C} \]</div>
+                    <p>Material offsets ΔVmat: <strong>Si</strong> = 0, <strong>VP</strong> = +0.15 V, <strong>BP</strong> = +0.05 V, <strong>SiGe</strong> = −0.10 V, <strong>InGaAs</strong> = −0.15 V.</p>
+                    <p>Clamped to [0.2, 0.5] V.</p>
+                </div>
+
+                <div class="card amber" id="s2d">
+                    <div class="card-title"><span class="badge badge-amber">SS</span> Subthreshold Swing</div>
+                    <div class="eq-box">\[ SS_0 = 60 + 1.2\left(\frac{L_g - 12}{12}\right)^2 \quad \text{[mV/dec]} \]</div>
+                    <div class="eq-box">\[ SS_{25} = SS_0 \cdot \left(1 + 0.02\,(k_{sp}-7)\cdot f_{arch}\right) \cdot f_{arch} \]</div>
+                    <div class="eq-box">\[ SS(T) = SS_{25} + \beta\,(T - 25), \quad \beta = 0.19\,\text{(mV/dec)/°C} \]</div>
+                    <div class="eq-label">Boltzmann limit = 60 mV/dec; SCE penalty via (Lg−12)² term; Lombardi spacer correction</div>
+                    <p>SS rises with temperature because the thermal voltage kT/q increases. The spacer architecture factor <code>archF</code> (triple=0.75, dual=0.85, single=1.0) reduces SCE-induced SS degradation. Clamped to [60, 100] mV/dec.</p>
+                </div>
+
+                <div class="card magenta" id="s2e">
+                    <div class="card-title"><span class="badge badge-violet">DIBL</span> Drain-Induced Barrier Lowering</div>
+                    <div class="eq-box">\[ \text{DIBL}_0 = 30 \cdot \left(\frac{12}{L_g}\right)^{1.2} \quad \text{[mV/V]} \]</div>
+                    <div class="eq-box">\[ \text{DIBL} = \text{DIBL}_0 \cdot \left(1 + 0.05\,(k_{sp}-7)\cdot f_{arch}\right) \cdot \left(1 + 0.002\,(T-25)\right) \cdot f_{arch} \]</div>
+                    <div class="eq-label">Power-law SCE scaling; Sentaurus fit to 17-device benchmark</div>
+                    <p>DIBL increases sharply for shorter channels (power exponent 1.2). Higher κ spacer increases DIBL due to enhanced fringing. Temperature increases DIBL slightly. Clamped to [10, 80] mV/V.</p>
+                </div>
+
+                <div class="card cyan" id="s2f">
+                    <div class="card-title"><span class="badge badge-cyan">µeff</span> Effective Mobility</div>
+                    <div class="eq-box">\[ \mu_{\text{eff}} = \frac{\mu_0}{1 + 0.03\,(V_{dd}-0.7)} \cdot \left(\frac{300}{T+273}\right)^{1.5} \cdot \frac{1}{1 + 1.2\,(5/T_{ns})^2} \]</div>
+                    <div class="eq-label">Lombardi transverse-field degradation · phonon scattering (T³/²) · MLDA quantum confinement</div>
+                    <table style="margin-top:12px">
+                        <thead><tr><th>Material</th><th>Base µ₀ (cm²/V·s)</th><th>ΔVmat (V)</th></tr></thead>
+                        <tbody>
+                            <tr><td>Silicon (Si)</td><td class="num">200</td><td class="num">0</td></tr>
+                            <tr><td>Violet Phosphorene (VP)</td><td class="num">150</td><td class="num">+0.15</td></tr>
+                            <tr><td>Black Phosphorene (BP)</td><td class="num">300</td><td class="num">+0.05</td></tr>
+                            <tr><td>SiGe (Strained)</td><td class="num">350</td><td class="num">−0.10</td></tr>
+                            <tr><td>InGaAs (High Mob)</td><td class="num">800</td><td class="num">−0.15</td></tr>
+                        </tbody>
+                    </table>
+                    <p style="margin-top:10px">The confinement correction <code>1/(1 + 1.2·(5/Tns)²)</code> models the MLDA (Modified Local Density Approximation) quantum potential effect from Sentaurus Device — reduces µeff by ~55% for Tns = 5 nm vs bulk.</p>
+                </div>
+
+                <div class="card green" id="s2g">
+                    <div class="card-title"><span class="badge badge-green">Ion</span> On-Current (Velocity Saturation Model)</div>
+                    <div class="eq-box">\[ \beta = \mu_{\text{eff}} \cdot C_{ox} \cdot \frac{W_{\text{eff}}}{L_g} \]</div>
+                    <div class="eq-box">\[ V_{dsat} = \frac{V_{ov}}{1 + V_{ov}/(E_{sat}\cdot L_g)}, \quad E_{sat} = 10^7\,\text{V/m} \]</div>
+                    <div class="eq-box">\[ I_{on} = \frac{\beta\,V_{ov}^2}{1 + V_{ov}/(E_{sat}\cdot L_g)} \quad \text{[A]} \]</div>
+                    <div class="eq-label">Two-piece velocity saturation model (Tsividis); Esat = 10⁷ V/m for Si NMOS</div>
+                    <p>Where Vov = Vdd − Vth (overdrive). The velocity saturation denominator <code>(1 + Vov/Esat·Lg)</code> prevents unphysical super-linear Ion growth at short channels. In the linear region (Vds &lt; Vdsat):</p>
+                    <div class="eq-box">\[ I_D\,(V_{gs}, V_{ds}) = \frac{\beta\,(2V_{ov}-V_{ds})\,V_{ds}}{2\,(1 + V_{ov}/(E_{sat}\cdot L_g))} \]</div>
+                </div>
+
+                <div class="card red" id="s2h">
+                    <div class="card-title"><span class="badge badge-red">Ioff</span> Off-Current</div>
+                    <div class="eq-box">\[ V_{th,\text{eff}} = V_{th} - \frac{\text{DIBL} \cdot V_{dd}}{1000} \]</div>
+                    <div class="eq-box">\[ I_{\text{off}} = 1.5\times10^{-7} \cdot \frac{W_{\text{eff}}}{L_g} \cdot 10^{-V_{th,\text{eff}}/(SS \times 10^{-3})} \quad \text{[A]} \]</div>
+                    <div class="eq-label">Reference current 1.5×10⁻⁷ A calibrated from Sentaurus + 17-device benchmark (Loubet 2017 et al.)</div>
+                    <p>The DIBL correction on Vth accounts for barrier lowering at high Vds = Vdd. The exponential <code>10^(-Vth/SS)</code> is the standard subthreshold current formula from the textbook model (Taur & Ning). Clamped Vth,eff ≥ 0.05 V to prevent numerical blow-up.</p>
+                    <p>For the full Id(Vgs, Vds) curve (subthreshold region):</p>
+                    <div class="eq-box">\[ I_D = I_{ref} \cdot 10^{(V_{gs} - V_{th,eff})/SS} \cdot 10^{-3} \]</div>
+                </div>
+
+                <div class="card" id="s2i">
+                    <div class="card-title"><span class="badge badge-blue">gm · gds</span> Transconductance & Output Conductance</div>
+                    <div class="eq-box">\[ g_m = \frac{2\,I_{on}}{V_{ov}} \quad \text{[S]} \]</div>
+                    <div class="eq-box">\[ V_{\text{early}} = 15 \cdot \frac{L_g}{12}\,\text{[V]}, \qquad g_{ds} = \frac{I_{on}}{V_{\text{early}}} \quad \text{[S]} \]</div>
+                    <div class="eq-label">Early voltage scales linearly with Lg (longer channel → better output resistance)</div>
+                    <p>These are displayed in the parameter grid as mS/µm and µS/µm respectively, normalised to Weff.</p>
+                </div>
+            </div>
+
+            <!-- ── S3: Temperature ── -->
+            <div class="section" id="s3">
+                <div class="section-title"><span class="icon">🌡️</span> Temperature Correction Models</div>
+                <div class="card amber">
+                    <p>Based on <strong>Aruna Kumari 2025</strong> and <strong>Martino 2025</strong> nanosheet FET temperature measurements:</p>
+                    <div class="eq-box">\[ V_{th}(T) = V_{th,25} - 0.0005\,(T - 25) \quad [\text{V}] \]</div>
+                    <div class="eq-box">\[ SS(T) = SS_{25} + 0.19\,(T - 25) \quad [\text{mV/dec}] \]</div>
+                    <div class="eq-box">\[ \mu_{eff}(T) \propto \left(\frac{300}{T+273}\right)^{1.5} \quad \text{(phonon scattering)} \]</div>
+                    <p>The temperature sweep charts plot these three quantities continuously from 25°C to 125°C, with the current device state highlighted as a red dot.</p>
+                </div>
+            </div>
+
+            <!-- ── S4: Process Corner ── -->
+            <div class="section" id="s4">
+                <div class="section-title"><span class="icon">🔄</span> Process Corner Scaling</div>
+                <div class="card">
+                    <table>
+                        <thead><tr><th>Corner</th><th>Lg scale</th><th>Tns scale</th><th>Vth scale</th><th>Effect</th></tr></thead>
+                        <tbody>
+                            <tr><td><strong>TT</strong> (Typical)</td><td class="num">×1.00</td><td class="num">×1.00</td><td class="num">×1.00</td><td>Nominal device</td></tr>
+                            <tr><td><strong>FF</strong> (Fast)</td><td class="num">×0.95</td><td class="num">×0.95</td><td class="num">×0.90</td><td>Shorter Lg, thinner sheet, lower Vth → more Ion, more leakage</td></tr>
+                            <tr><td><strong>SS</strong> (Slow)</td><td class="num">×1.05</td><td class="num">×1.05</td><td class="num">×1.10</td><td>Longer Lg, thicker sheet, higher Vth → less Ion, less leakage</td></tr>
+                        </tbody>
+                    </table>
+                    <p style="margin-top:12px">All three corners are shown simultaneously on the <strong>Transfer Characteristic</strong> and <strong>Output Characteristic</strong> charts (TT=blue, FF=teal, SS=red).</p>
+                </div>
+            </div>
+
+            <!-- ── S5: SNN Predictor ── -->
+            <div class="section" id="s5">
+                <div class="section-title"><span class="icon">🧠</span> SNN Performance Predictor — <code>computeSNN(d, S)</code></div>
+                <div class="card violet">
+                    <div class="card-title">LightGBM Surrogate — Linearised Coefficients</div>
+                    <p>The full LightGBM model (500 trees, trained on 17,234 Sentaurus TCAD + SNN-simulator samples) is approximated by its <strong>first-order Taylor expansion</strong> around the calibration anchor points. This enables real-time evaluation in the browser without a Python backend.</p>
+                    <div class="eq-box">
+                        \[ E\,[\text{fJ}] = 0.8 + 4.5\,I_{on}^{mA} + 0.001\,I_{off}^{pA} + 0.005\,SS + 0.003\,T \]
+                    </div>
+                    <div class="eq-box">
+                        \[ L\,[\text{ms}] = 1.2 - 41.3\,I_{on}^{mA} + 0.014\,I_{off}^{pA} + 0.167\,SS + 0.01\,T \]
+                    </div>
+                    <div class="eq-box">
+                        \[ A\,[\%] = 58.6 + 193.4\,I_{on}^{mA} - 0.077\,I_{off}^{pA} - 0.075\,SS - 0.05\,T \]
+                    </div>
+                    <div class="eq-label">Ion in mA (total device, not per µm) · Ioff in pA · SS in mV/dec · T in °C</div>
+
+                    <p><strong>4 calibration anchor points:</strong></p>
+                    <table>
+                        <thead><tr><th>Case</th><th>Lg</th><th>Ion</th><th>SS</th><th>T</th><th>E target</th><th>L target</th><th>A target</th></tr></thead>
+                        <tbody>
+                            <tr><td>Default</td><td class="num">12 nm</td><td class="num">0.159 mA</td><td class="num">60</td><td class="num">25°C</td><td class="num">1.9 fJ</td><td class="num">5.0 ms</td><td class="num">83%</td></tr>
+                            <tr><td>Best</td><td class="num">12 nm</td><td class="num">0.196 mA</td><td class="num">60</td><td class="num">25°C</td><td class="num">2.1 fJ</td><td class="num">3.5 ms</td><td class="num">90%</td></tr>
+                            <tr><td>Short-channel</td><td class="num">8 nm</td><td class="num">0.219 mA</td><td class="num">60</td><td class="num">25°C</td><td class="num">2.4 fJ</td><td class="num">6.1 ms</td><td class="num">75%</td></tr>
+                            <tr><td>Hot</td><td class="num">12 nm</td><td class="num">0.120 mA</td><td class="num">62</td><td class="num">125°C</td><td class="num">2.0 fJ</td><td class="num">8.0 ms</td><td class="num">70%</td></tr>
+                        </tbody>
+                    </table>
+
+                    <p style="margin-top:14px"><strong>Full model metadata:</strong></p>
+                    <div class="chip-row">
+                        <span class="chip">Algorithm: LightGBM</span>
+                        <span class="chip">Trees: 500</span>
+                        <span class="chip">LR: 0.05</span>
+                        <span class="chip">Max depth: 8</span>
+                        <span class="chip">Subsample: 0.8</span>
+                        <span class="chip">Feature fraction: 0.9</span>
+                        <span class="chip">Train samples: 17,234</span>
+                        <span class="chip">R²(Acc): 0.97</span>
+                        <span class="chip">R²(Energy): 0.94</span>
+                        <span class="chip">R²(Latency): 0.91</span>
+                        <span class="chip">MAPE(Acc): ±1.8%</span>
+                        <span class="chip">MAPE(E): ±7.2%</span>
+                        <span class="chip">MAPE(L): ±5.5%</span>
+                    </div>
+                    <p style="margin-top:12px"><strong>Top 3 features (SHAP):</strong> Ion/Ioff ratio &gt; SS &gt; Vth.</p>
+                    <p>Outputs clamped: E ≥ 0.01 fJ · L ≥ 0.5 ms · A ∈ [50%, 98%].</p>
+                </div>
+            </div>
+
+            <!-- ── S6: Graphs ── -->
+            <div class="section" id="s6">
+                <div class="section-title"><span class="icon">📈</span> Graph Generation — All 11 Charts</div>
+
+                <div class="card" id="s6a">
+                    <div class="card-title"><span class="badge badge-blue">Chart 1</span> Transfer Characteristic Id–Vgs</div>
+                    <p><strong>X-axis:</strong> Vgs from 0 → Vdd (80 equally spaced points). <strong>Y-axis:</strong> Id (µA, log or linear). Three curves plotted simultaneously: TT, FF, SS corners.</p>
+                    <p>For <strong>above-threshold</strong> (Vgs ≥ Vth):</p>
+                    <div class="eq-box">\[ I_D = \frac{\beta\,(2V_{ov}-V_{ds})\,V_{ds}}{2\,(1 + V_{ov}/E_{sat}L_g)} \quad (V_{ds} < V_{dsat}) \]</div>
+                    <div class="eq-box">\[ I_D = \frac{\beta\,V_{ov}^2}{1 + V_{ov}/E_{sat}L_g} \quad (V_{ds} \geq V_{dsat}) \]</div>
+                    <p>For <strong>subthreshold</strong> (Vgs &lt; Vth): DIBL-corrected exponential model. Toggle button switches Y-axis between log (Sentaurus-style) and linear scale.</p>
+                </div>
+
+                <div class="card" id="s6b">
+                    <div class="card-title"><span class="badge badge-green">Chart 2</span> Output Characteristic Id–Vds</div>
+                    <p><strong>X-axis:</strong> Vds from 0 → Vdd (60 points). <strong>Y-axis:</strong> Id (µA). Three corners at Vgs = Vdd. Uses the same <code>Id_at(Vgs, Vds)</code> function with the tanh-saturation approximation:</p>
+                    <div class="eq-box">\[ I_D(V_{ds}) \approx I_{on} \cdot \tanh\!\left(\frac{V_{ds}}{V_{dsat}}\right) \]</div>
+                    <p>This smoothly transitions from the linear region (slope ≈ gds) to saturation (Id ≈ Ion).</p>
+                </div>
+
+                <div class="card" id="s6c">
+                    <div class="card-title"><span class="badge badge-violet">Charts 3–9</span> Parametric Sweep Charts</div>
+                    <table>
+                        <thead><tr><th>#</th><th>Chart</th><th>X sweep</th><th>Y quantity</th><th>Points</th></tr></thead>
+                        <tbody>
+                            <tr><td>3</td><td>Vth vs T</td><td>T = 25→125°C, step 5</td><td>Vth (V)</td><td>21</td></tr>
+                            <tr><td>4</td><td>SS vs T</td><td>T = 25→125°C, step 5</td><td>SS (mV/dec)</td><td>21</td></tr>
+                            <tr><td>5</td><td>Ion vs Lg</td><td>Lg = 8→16 nm, step 1</td><td>Ion (A)</td><td>9</td></tr>
+                            <tr><td>6</td><td>DIBL vs Lg</td><td>Lg = 8→16 nm, step 1</td><td>DIBL (mV/V)</td><td>9</td></tr>
+                            <tr><td>7</td><td>Ion vs Wns</td><td>Wns = 10→30 nm, step 1</td><td>Ion (µA/µm)</td><td>21</td></tr>
+                            <tr><td>8</td><td>µeff vs T</td><td>T = 25→125°C, step 5</td><td>µeff (cm²/Vs)</td><td>21 + reference line</td></tr>
+                            <tr><td>9</td><td>κ sweep (bar)</td><td>6 spacer materials</td><td>Ion/Ioff ratio</td><td>6</td></tr>
+                            <tr><td>10</td><td>SNN Energy vs Ion</td><td>Ion = 0.02→0.2 mA</td><td>E (fJ)</td><td>19 + red dot</td></tr>
+                            <tr><td>11</td><td>SNN Latency vs Ioff</td><td>Ioff = 10⁻³→15 pA (log)</td><td>L (ms)</td><td>log-spaced + red dot</td></tr>
+                            <tr><td>12</td><td>SNN Accuracy vs T</td><td>T = 0→125°C, step 5</td><td>A (%)</td><td>26 + red dot</td></tr>
+                        </tbody>
+                    </table>
+                    <p style="margin-top:10px">Each sweep calls <code>computeDevice({...S, [param]: value})</code> — the current device state S is held fixed except for the swept variable. The <strong>red dot</strong> marks the current operating point.</p>
+                </div>
+
+                <div class="card cyan" id="s6d">
+                    <div class="card-title"><span class="badge badge-cyan">Canvas</span> Live Band Structure Diagram</div>
+                    <p>Drawn using Canvas 2D API. The energy bands are computed from Vth and Vdd:</p>
+                    <ul>
+                        <li><strong>Source Fermi level</strong> fixed at 0 eV reference</li>
+                        <li><strong>Channel barrier height</strong> = q·Vth (visualised as the peak in the conduction band)</li>
+                        <li><strong>Drain quasi-Fermi level</strong> drops by q·Vdd below source</li>
+                        <li>Conduction band Ec drawn as a smooth cosine-interpolated curve through: source flat → barrier peak → gate region flat → drain drop</li>
+                        <li>Valence band Ev drawn parallel to Ec with a 1.12 eV (Si bandgap) offset</li>
+                    </ul>
+                    <p>Updates every time <code>computeAll()</code> is called via <code>window.updateBandDiagram(Vth, Vdd)</code>.</p>
+                </div>
+
+                <div class="card magenta" id="s6e">
+                    <div class="card-title"><span class="badge badge-violet">Canvas</span> SNN Spike Raster Plot</div>
+                    <p>A real-time Leaky-Integrate-and-Fire (LIF) neuron simulation displayed as an animated raster:</p>
+                    <div class="eq-box">\[ V_i[t+1] = V_i[t] \cdot \tau_{\text{decay}} + I_{\text{input}}[t] \]</div>
+                    <div class="eq-box">\[ \text{if}\;V_i \geq V_{thresh}=1.0: \quad \text{spike, reset}\;V_i = 0 \]</div>
+                    <p>Parameters: decay τ = 0.85, threshold = 1.0, Ninput ~ U(0, 0.45·tempRate). The energy E and latency L from computeSNN modulate:</p>
+                    <ul>
+                        <li><strong>Dot size:</strong> max(2.2, min(5.5, 2.0 + 0.6·E)) — higher energy → larger spikes</li>
+                        <li><strong>Glow radius:</strong> max(0, min(15, 2.0·E))</li>
+                        <li><strong>Latency label:</strong> displayed at bottom of canvas</li>
+                    </ul>
+                    <p>10 neurons, 200 time-step history. Animates at 30 fps via <code>setInterval</code>. Each simulation step runs in &lt; 0.1 ms.</p>
+                </div>
+            </div>
+
+            <!-- ── S7: 3D Viewer ── -->
+            <div class="section" id="s7">
+                <div class="section-title"><span class="icon">🔬</span> TCAD LiveView — Three.js 3D Model</div>
+                <div class="card green">
+                    <p>Built using <strong>Three.js r128</strong> with <code>WebGLRenderer</code>, <code>OrbitControls</code>, and <code>CSS2DRenderer</code> for floating labels. The scene rebuilds on every <code>computeAll()</code> call:</p>
+                    <table>
+                        <thead><tr><th>Component</th><th>Geometry</th><th>Material</th><th>Driven by</th></tr></thead>
+                        <tbody>
+                            <tr><td>Si Nanosheet (×Nstacks)</td><td>BoxGeometry(Wns, Tns, Lg)</td><td>MeshStandard, grey (#CCCCCC), metalness=0.6</td><td>Wns, Tns, Lg, Nstacks</td></tr>
+                            <tr><td>High-k Oxide shell</td><td>Box(Wns+0.06, Tns+0.06, Lg+0.06)</td><td>Orange (#FFAA44), transparent opacity=0.4</td><td>EOT (visualised)</td></tr>
+                            <tr><td>Metal Gate shell</td><td>Box(Wns+0.14, Tns+0.14, Lg+0.14)</td><td>Blue (#3a86ff), transparent opacity=0.65</td><td>Lg</td></tr>
+                            <tr><td>Source/Drain contacts</td><td>Box(0.25, Tns×0.85, 0.6) × 2</td><td>HSL colour saturated by NSD slider</td><td>Nstacks, Tns, NSD</td></tr>
+                            <tr><td>Inter-sheet spacer</td><td>Box(0.2, spacing, 0.35)</td><td>Dark grey, metalness=0.3</td><td>Nstacks</td></tr>
+                            <tr><td>Substrate</td><td>Box(Wns+0.8, 0.3, Lg+0.8)</td><td>Canvas-textured brown (grid pattern)</td><td>Wns, Lg</td></tr>
+                        </tbody>
+                    </table>
+                    <p style="margin-top:12px"><strong>Scale:</strong> All dimensions divided by 10 (so 12 nm Lg → 1.2 scene units). Sheet spacing = 0.4 units. Camera at (5, 4.5, 8) looking at (0, 0.5, 0). PCFSoftShadowMap enabled at 1024×1024.</p>
+                    <p><strong>Labels:</strong> CSS2DObject floating divs show Lg, Wns, Tns, Stacks, Source, Drain, Gate, Substrate with monospace font, dark blur background, coloured border.</p>
+                    <p><strong>TCAD Mesh toggle:</strong> When enabled, a wireframe bounding box + uniform grid of line segments (step=0.4 units) + red SphereGeometry nodes (r=0.045) are added to the scene — mimicking a Sentaurus TCAD mesh visualisation.</p>
+                    <p><strong>Lighting:</strong> AmbientLight + DirectionalLight (shadow) + 3× PointLights (fill/back/rim).</p>
+                </div>
+            </div>
+
+            <!-- ── S8: Calibration ── -->
+            <div class="section" id="s8">
+                <div class="section-title"><span class="icon">📊</span> Calibration Database — 17 Reference Devices</div>
+                <div class="card amber">
+                    <p>The analytical model is benchmarked against the following published data points (used as the scatter plot in the Pareto section):</p>
+                    <table>
+                        <thead><tr><th>Reference</th><th>Lg (nm)</th><th>Wns</th><th>Tns</th><th>N</th><th>κ</th><th>Ion (µA/µm)</th><th>Ioff (pA/µm)</th><th>SS</th><th>Vth (V)</th><th>DIBL</th></tr></thead>
+                        <tbody>
+                            <tr><td>Loubet 2017</td><td>12</td><td>20</td><td>5</td><td>3</td><td>7</td><td>1000</td><td>100</td><td>65</td><td>0.32</td><td>28</td></tr>
+                            <tr><td>Lee 2025-A</td><td>12</td><td>22</td><td>5</td><td>3</td><td>7</td><td>980</td><td>85</td><td>63</td><td>0.33</td><td>24</td></tr>
+                            <tr><td>Lee 2025-B</td><td>10</td><td>22</td><td>5</td><td>3</td><td>7</td><td>1150</td><td>140</td><td>66</td><td>0.28</td><td>35</td></tr>
+                            <tr><td>Kaur 2025</td><td>14</td><td>24</td><td>6</td><td>2</td><td>7</td><td>820</td><td>55</td><td>62</td><td>0.37</td><td>18</td></tr>
+                            <tr><td>Lakshmana 2026 ×4</td><td>12–14</td><td>22</td><td>5</td><td>3</td><td>3.9–22</td><td>855–1120</td><td>45–98</td><td>61–65</td><td>0.31–0.35</td><td>18–32</td></tr>
+                            <tr><td>Dixit 2025</td><td>10</td><td>16</td><td>4</td><td>4</td><td>22</td><td>1350</td><td>180</td><td>70</td><td>0.26</td><td>45</td></tr>
+                            <tr><td>Dewangan 2025 ×3</td><td>8–16</td><td>20</td><td>5</td><td>3</td><td>3.9–7</td><td>680–1580</td><td>25–380</td><td>61–78</td><td>0.22–0.40</td><td>12–65</td></tr>
+                        </tbody>
+                    </table>
+                    <p style="margin-top:12px"><strong>TCAD Tool:</strong> Sentaurus Device T-2022.03 · <strong>Physical models:</strong> MLDA quantum correction, Lombardi mobility, SRH recombination · <strong>Vth extraction:</strong> constant current Ith = 10⁻⁷ A/µm · <strong>SS extraction:</strong> linear fit of log(Id) in subthreshold region.</p>
+                </div>
+            </div>
+
+            <!-- ── S9: Limitations ── -->
+            <div class="section" id="s9">
+                <div class="section-title"><span class="icon">⚠️</span> Limitations & Uncertainty</div>
+                <div class="card red">
+                    <table>
+                        <thead><tr><th>Parameter</th><th>Calibrated Range</th><th>Outside Range</th><th>Uncertainty (in range)</th></tr></thead>
+                        <tbody>
+                            <tr><td>Lg</td><td class="num">8 – 16 nm</td><td>Red flag in UI</td><td class="num">± 5%</td></tr>
+                            <tr><td>Vth</td><td class="num">0.20 – 0.50 V</td><td>Clamped</td><td class="num">± 15 mV</td></tr>
+                            <tr><td>SS</td><td class="num">60 – 100 mV/dec</td><td>Clamped</td><td class="num">± 2.5 mV/dec</td></tr>
+                            <tr><td>Ion</td><td class="num">0.1 – 3 mA/µm</td><td>Extrapolated</td><td class="num">± 8%</td></tr>
+                            <tr><td>Ioff</td><td class="num">0.01 – 500 pA/µm</td><td>Extrapolated</td><td class="num">± 20%</td></tr>
+                            <tr><td>DIBL</td><td class="num">10 – 80 mV/V</td><td>Clamped</td><td class="num">± 5 mV/V</td></tr>
+                            <tr><td>SNN Energy</td><td class="num">1 – 25 fJ/spike</td><td>Extrapolated</td><td class="num">± 7.2%</td></tr>
+                            <tr><td>SNN Latency</td><td class="num">0.5 – 12 ms</td><td>Extrapolated</td><td class="num">± 5.5%</td></tr>
+                            <tr><td>SNN Accuracy</td><td class="num">50 – 98%</td><td>Clamped at 98%</td><td class="num">± 1.8%</td></tr>
+                            <tr><td>Temperature</td><td class="num">25 – 125°C</td><td>Not modelled</td><td class="num">± 3°C equivalent</td></tr>
+                        </tbody>
+                    </table>
+                    <p style="margin-top:14px"><strong>Key caveats:</strong></p>
+                    <ul>
+                        <li>Energy/spike predictions assume <strong>ideal periphery</strong> — real systems may be 2–5× higher due to interconnect, SRAM, and routing capacitances.</li>
+                        <li>The SNN surrogate was trained on <strong>LIF neuron architectures only</strong>. LSTM-SNN or adaptive-threshold variants are not covered.</li>
+                        <li>Quantum transport effects (BTBT, direct source-to-drain tunnelling) are not modelled. These become significant for Lg &lt; 8 nm.</li>
+                        <li>The analytical model does not simulate <strong>layout parasitics</strong> (RC delays, fringing capacitances beyond the spacer model).</li>
+                        <li>All results are <strong>pre-TCAD approximations</strong> and should be validated with full Sentaurus simulation before tape-out.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <footer>
+                📌 FET2SNN Model Cards v2.1 · Last updated: 2026-05-29 · DOI: 10.xxxx/fet2snn.2.1 (restricted)
+            </footer>
+
+        </div><!-- /content -->
+    </div><!-- /layout -->
+</div><!-- /mainPage -->
+
+<script>
+    const PASSWORD    = "ModelCard2025";
+    const SECRET_HASH = CryptoJS.SHA256(PASSWORD).toString();
+
+    const authScreen  = document.getElementById('authScreen');
+    const mainPage    = document.getElementById('mainPage');
+    const passwordInput = document.getElementById('passwordInput');
+    const unlockBtn   = document.getElementById('unlockBtn');
+    const authError   = document.getElementById('authError');
+    const logoutBtn   = document.getElementById('logoutBtn');
+
+    function unlock() {
+        authScreen.style.display = 'none';
+        mainPage.classList.add('visible');
+        localStorage.setItem('modelCardUnlocked', 'true');
+    }
+    function lock() {
+        authScreen.style.display = 'flex';
+        mainPage.classList.remove('visible');
+        localStorage.removeItem('modelCardUnlocked');
+        passwordInput.value = '';
+        authError.textContent = '';
+    }
+    function attempt() {
+        const entered = passwordInput.value.trim();
+        if (!entered) { authError.textContent = 'Please enter the password.'; return; }
+        if (CryptoJS.SHA256(entered).toString() === SECRET_HASH) {
+            unlock();
+        } else {
+            authError.textContent = '✗ Incorrect password. Access denied.';
+            passwordInput.value = '';
+        }
+    }
+
+    unlockBtn.addEventListener('click', attempt);
+    passwordInput.addEventListener('keypress', e => { if (e.key === 'Enter') attempt(); });
+    logoutBtn.addEventListener('click', lock);
+
+    if (localStorage.getItem('modelCardUnlocked') === 'true') unlock();
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" id="MathJax-script" async></script>
+</body>
+</html>

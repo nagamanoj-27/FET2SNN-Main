@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sentaurus Visual User Guide</title>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    /* CSS Variables */
+    :root {
+      /* Light Theme */
+      --bg-color: #f8fafc;
+      --surface-color: #ffffff;
+      --border-color: #e2e8f0;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --primary-color: #3b82f6;
+      --primary-hover: #2563eb;
+      --code-bg: #1e293b;
+      --code-text: #f8fafc;
+      --sidebar-width: 280px;
+      --topbar-height: 60px;
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      --transition: all 0.2s ease-in-out;
+    }
+
+    [data-theme="dark"] {
+      /* Dark Theme */
+      --bg-color: #0f172a;
+      --surface-color: #1e293b;
+      --border-color: #334155;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --primary-color: #60a5fa;
+      --primary-hover: #93c5fd;
+      --code-bg: #0b1120;
+      --code-text: #f1f5f9;
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Global Styles */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      line-height: 1.6;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    h1, h2, h3, h4 { font-weight: 600; margin-bottom: 1rem; color: var(--text-main); }
+    h1 { font-size: 2.25rem; margin-bottom: 1.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color); }
+    h2 { font-size: 1.75rem; margin-top: 2.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; }
+    h3 { font-size: 1.25rem; margin-top: 1.5rem; }
+    p { margin-bottom: 1rem; color: var(--text-muted); }
+    ul { margin-left: 1.5rem; margin-bottom: 1rem; color: var(--text-muted); }
+    li { margin-bottom: 0.5rem; }
+    a { color: var(--primary-color); text-decoration: none; transition: var(--transition); }
+    a:hover { color: var(--primary-hover); text-decoration: underline; }
+    
+    code { font-family: 'Fira Code', monospace; font-size: 0.85em; background: rgba(128,128,128,0.15); padding: 0.15rem 0.3rem; border-radius: 4px; color: var(--primary-color); }
+    pre { background: var(--code-bg); color: var(--code-text); padding: 1.25rem; border-radius: 8px; overflow-x: auto; font-family: 'Fira Code', monospace; font-size: 0.85rem; margin-bottom: 1.5rem; position: relative; }
+    pre code { background: none; padding: 0; color: inherit; }
+
+    /* Topbar */
+    .topbar {
+      position: fixed; top: 0; left: 0; right: 0; height: var(--topbar-height);
+      background: var(--surface-color); border-bottom: 1px solid var(--border-color);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 1.5rem; z-index: 100; box-shadow: var(--shadow);
+      transition: var(--transition);
+    }
+    .topbar-left { display: flex; align-items: center; gap: 1rem; }
+    .menu-toggle { display: none; background: none; border: none; color: var(--text-main); font-size: 1.5rem; cursor: pointer; }
+    .brand { font-size: 1.25rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; }
+    
+    .search-container { position: relative; max-width: 400px; width: 100%; margin: 0 2rem; }
+    .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
+    .search-input { 
+      width: 100%; padding: 0.6rem 1rem 0.6rem 2.5rem; 
+      border: 1px solid var(--border-color); border-radius: 20px;
+      background: var(--bg-color); color: var(--text-main); font-family: inherit;
+      transition: var(--transition); outline: none;
+    }
+    .search-input:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+
+    .topbar-right { display: flex; align-items: center; gap: 1rem; }
+    .theme-toggle { background: none; border: none; color: var(--text-muted); font-size: 1.25rem; cursor: pointer; transition: var(--transition); }
+    .theme-toggle:hover { color: var(--primary-color); }
+
+    /* Sidebar */
+    .sidebar {
+      position: fixed; top: var(--topbar-height); left: 0; bottom: 0;
+      width: var(--sidebar-width); background: var(--surface-color);
+      border-right: 1px solid var(--border-color); overflow-y: auto;
+      padding: 1.5rem 0; z-index: 90; transition: transform 0.3s ease;
+    }
+    .nav-list { list-style: none; margin: 0; }
+    .nav-item { padding: 0.25rem 1.5rem; }
+    .nav-link { 
+      display: block; padding: 0.5rem 0.75rem; color: var(--text-muted);
+      border-radius: 6px; font-weight: 500; font-size: 0.95rem; text-decoration: none;
+    }
+    .nav-link:hover, .nav-link.active {
+      background: rgba(59, 130, 246, 0.1); color: var(--primary-color); text-decoration: none;
+    }
+
+    /* Main Content */
+    .main-wrapper {
+      margin-top: var(--topbar-height); margin-left: var(--sidebar-width);
+      flex: 1; overflow-y: auto; scroll-behavior: smooth;
+      display: flex; flex-direction: column;
+    }
+    .content { padding: 3rem 4rem; max-width: 1200px; margin: 0 auto; flex: 1; width: 100%; }
+
+    /* Copy Button */
+    .copy-btn {
+      position: absolute; top: 0.5rem; right: 0.5rem;
+      background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+      color: #cbd5e1; padding: 0.4rem 0.6rem; border-radius: 4px;
+      cursor: pointer; font-size: 0.8rem; transition: var(--transition);
+      display: flex; align-items: center; gap: 0.4rem;
+    }
+    .copy-btn:hover { background: rgba(255,255,255,0.2); color: #fff; }
+
+    /* Command Table */
+    .table-container { overflow-x: auto; margin-bottom: 2rem; border-radius: 8px; box-shadow: var(--shadow); }
+    table { width: 100%; border-collapse: collapse; background: var(--surface-color); text-align: left; }
+    th, td { padding: 1rem; border-bottom: 1px solid var(--border-color); }
+    th { background: rgba(128,128,128,0.05); font-weight: 600; color: var(--text-main); position: sticky; top: 0; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover { background: rgba(128,128,128,0.02); }
+    .cmd-name { 
+      font-family: 'Fira Code', monospace; color: var(--primary-color); font-weight: 500; cursor: pointer;
+      display: inline-block; padding: 0.2rem 0.4rem; border-radius: 4px; transition: background 0.2s;
+    }
+    .cmd-name:hover { background: rgba(59, 130, 246, 0.1); }
+    .cmd-desc { color: var(--text-muted); font-size: 0.9rem; }
+    .cmd-ex { font-family: 'Fira Code', monospace; font-size: 0.8rem; color: var(--text-muted); background: rgba(128,128,128,0.05); padding: 0.5rem; border-radius: 4px; display: block; margin-top: 0.5rem;}
+
+    /* Footer */
+    .footer {
+      padding: 2rem 4rem; text-align: center; border-top: 1px solid var(--border-color);
+      color: var(--text-muted); font-size: 0.9rem; background: var(--surface-color); margin-top: auto;
+    }
+
+    /* Tooltip */
+    .tooltip {
+      position: absolute; background: #334155; color: #fff; padding: 0.4rem 0.8rem;
+      border-radius: 4px; font-size: 0.8rem; pointer-events: none; opacity: 0;
+      transition: opacity 0.2s; z-index: 1000; transform: translateY(-10px);
+    }
+    .tooltip.show { opacity: 1; transform: translateY(0); }
+
+    /* Highlights for search */
+    .highlight { background-color: rgba(234, 179, 8, 0.4); border-radius: 2px; }
+
+    /* Responsive */
+    @media (max-width: 992px) {
+      .content { padding: 2rem; }
+      .search-container { max-width: 300px; }
+    }
+    @media (max-width: 768px) {
+      .menu-toggle { display: block; }
+      .sidebar { transform: translateX(-100%); }
+      .sidebar.open { transform: translateX(0); }
+      .main-wrapper { margin-left: 0; }
+      .search-container { display: none; } /* Could add a mobile search toggle instead */
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Topbar -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="menu-toggle" id="menuToggle"><i class="fas fa-bars"></i></button>
+      <div class="brand"><i class="fas fa-cube text-primary" style="color:var(--primary-color)"></i> Sentaurus Visual</div>
+    </div>
+    
+    <div class="search-container">
+      <i class="fas fa-search search-icon"></i>
+      <input type="text" class="search-input" id="searchInput" placeholder="Search commands or documentation...">
+    </div>
+
+    <div class="topbar-right">
+      <button class="theme-toggle" id="themeToggle" title="Toggle Dark/Light Mode">
+        <i class="fas fa-moon"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <ul class="nav-list">
+      <li class="nav-item"><a href="#overview" class="nav-link">Overview & Functionality</a></li>
+      <li class="nav-item"><a href="#animations" class="nav-link">Educational Animations</a></li>
+      <li class="nav-item"><a href="#getting-started" class="nav-link">Getting Started</a></li>
+      <li class="nav-item"><a href="#basic-operations" class="nav-link">Basic Operations</a></li>
+      <li class="nav-item"><a href="#xy-plots" class="nav-link">Working with XY Plots</a></li>
+      <li class="nav-item"><a href="#2d-3d-plots" class="nav-link">Working with 2D & 3D Plots</a></li>
+      <li class="nav-item"><a href="#scripting" class="nav-link">Automation & Scripting</a></li>
+      <li class="nav-item"><a href="#tcl-reference" class="nav-link">Tcl Command Reference</a></li>
+      <li class="nav-item"><a href="#python-commands" class="nav-link">Python Commands</a></li>
+    </ul>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-wrapper" id="mainWrapper">
+    <div class="content" id="contentArea">
+      
+      <h1>Sentaurus Visual User Guide</h1>
+      <p>Reference guide for Sentaurus Visual (Version T-2022.03). This document covers basic operations, visualization of data, extraction techniques, and automation using Tcl and Python.</p>
+
+      <section id="animations" class="section">
+        <h2>Educational Animations</h2>
+        <p>Explore these visual explanations of biological neurons and how transistors can emulate them as Spiking Neural Networks (SNNs).</p>
+        
+        <div style="display: flex; flex-wrap: wrap; gap: 2rem; margin-top: 1.5rem;">
+          <div style="flex: 1; min-width: 300px;">
+            <h3>1. Biological Neuron Demo</h3>
+            <video width="100%" controls autoplay loop muted playsinline style="border-radius: 8px; box-shadow: var(--shadow); background: #000;">
+              <source src="media/videos/manim_scenes/720p30/BiologicalNeuron.mp4" type="video/mp4">
+              Your browser does not support the video tag.
+            </video>
+            <p style="margin-top: 0.5rem; font-size: 0.9rem;">Demonstrates how a biological neuron integrates input signals (dendrites) in the soma and fires an action potential down the axon.</p>
+          </div>
+          
+          <div style="flex: 1; min-width: 300px;">
+            <h3>2. Transistor as an SNN</h3>
+            <video width="100%" controls autoplay loop muted playsinline style="border-radius: 8px; box-shadow: var(--shadow); background: #000;">
+              <source src="media/videos/manim_scenes/720p30/TransistorSNN.mp4" type="video/mp4">
+              Your browser does not support the video tag.
+            </video>
+            <p style="margin-top: 0.5rem; font-size: 0.9rem;">Shows how a transistor's gate capacitance accumulates charge until reaching the threshold voltage (V<sub>th</sub>), firing an I<sub>on</sub> current spike.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="overview" class="section">
+        <h2>Overview & Functionality</h2>
+        <p>Sentaurus Visual is the primary visualization tool for Synopsys TCAD. It provides an advanced graphical user interface and a powerful scripting engine to analyze 1D, 2D, and 3D simulation results.</p>
+        <ul>
+          <li><strong>Visualize:</strong> Device structures, I-V curves, scalar/vector fields (e.g., ElectrostaticPotential, CurrentDensity), depletion regions, and mesh properties.</li>
+          <li><strong>Supported File Formats:</strong>
+            <ul>
+              <li><code>.tdr</code> — TCAD Data Representation (structures and fields)</li>
+              <li><code>.plt</code> — XY plot data (curves, electrical characteristics)</li>
+              <li><code>.plx</code>, <code>.csv</code> — Tabular data export/import</li>
+              <li><code>.tif</code>, <code>.png</code> — Image export</li>
+            </ul>
+          </li>
+        </ul>
+      </section>
+
+      <section id="getting-started" class="section">
+        <h2>Getting Started</h2>
+        <p>To start Sentaurus Visual from the command line:</p>
+        <pre><button class="copy-btn"><i class="far fa-copy"></i> Copy</button><code>svisual
+svisual nsfet_des.tdr
+svisual -x my_script.tcl</code></pre>
+        <p>Alternatively, open files via the GUI using <strong>File > Load</strong> or by dragging and dropping <code>.tdr</code> / <code>.plt</code> files directly into the workspace.</p>
+      </section>
+
+      <section id="basic-operations" class="section">
+        <h2>Basic Operations</h2>
+        <ul>
+          <li><strong>Linking Plots:</strong> Use the <code>link_plots</code> command or the GUI Link button to synchronize pan, zoom, and rotation across multiple plots. Useful when comparing two device states side-by-side.</li>
+          <li><strong>Custom Buttons:</strong> You can assign frequently used Tcl scripts to custom toolbar buttons for rapid execution.</li>
+          <li><strong>Navigation:</strong> Middle-click to pan, scroll to zoom, right-click and drag to rotate (3D). Use the Undo button (or <code>undo</code> command) to revert view changes.</li>
+          <li><strong>Performance Options:</strong> For massive 3D meshes or dense XY plots, enable <em>Fast Draw</em> or adjust the Level of Detail (LoD) and subsampling in the Preferences to accelerate rendering.</li>
+        </ul>
+      </section>
+
+      <section id="xy-plots" class="section">
+        <h2>Working with XY Plots</h2>
+        <p>XY Plots are essential for visualizing electrical characteristics like I-V or C-V curves, or 1D extractions (cutlines) from devices.</p>
+        
+        <h3>Core Features</h3>
+        <ul>
+          <li><strong>Cutline Plots:</strong> Extract 1D data along a line segment drawn across a 2D/3D field. The cutline can be dynamically dragged in the structure plot, updating the XY plot in real-time.</li>
+          <li><strong>Curve Properties:</strong> Customize color, line style, markers, and thickness. Apply transformations (e.g., Absolute Value, Derivative, Integral) directly from the Data Explorer.</li>
+          <li><strong>Axis & Legend Customization:</strong> Adjust scale (linear/logarithmic), range, padding, and tick precision. Support for Greek letters and symbols via XML-style tags (e.g., <code>&lt;i&gt;m&lt;/i&gt;</code>).</li>
+          <li><strong>Probing & Math:</strong> Use <code>probe_curve</code> to find intercepts or target Y values. Create new curves via math operations using <code>create_curve -function</code>.</li>
+        </ul>
+        
+        <h3>Electrical Extraction Macro Example</h3>
+        <pre><button class="copy-btn"><i class="far fa-copy"></i> Copy</button><code># Extract Vth using constant current method
+set vth [probe_curve -plot Plot_1 -curve Id -target_y 1e-7]
+puts "Threshold Voltage: $vth V"</code></pre>
+      </section>
+
+      <section id="2d-3d-plots" class="section">
+        <h2>Working with 2D & 3D Plots</h2>
+        <p>Advanced visualization of TCAD meshes and physical fields.</p>
+        
+        <ul>
+          <li><strong>Visualizing Fields:</strong> Map scalar fields (e.g., DopingConcentration) to color palettes. Use Linear, Logarithmic, or Asinh scales. Vector fields (e.g., ElectricField) can be visualized using arrows.</li>
+          <li><strong>Materials & Regions:</strong> Toggle visibility of specific materials or regions. Adjust translucency (alpha) to see inside 3D structures. Show/hide bulk elements, borders, and mesh nodes.</li>
+          <li><strong>Junctions & Depletion:</strong> Sentaurus Visual automatically highlights PN junction lines and depletion region boundaries.</li>
+          <li><strong>Cutlines & Cutplanes:</strong> Create Orthogonal, Free, Polyline, or Boundary cutlines. In 3D, use Cutplanes to slice through the device and expose internal field distributions.</li>
+          <li><strong>Isosurfaces:</strong> Create 3D contours of constant scalar values using <code>create_iso</code> (e.g., mapping the exact boundary of an inversion channel).</li>
+          <li><strong>Value Blanking:</strong> Hide mesh elements that meet specific criteria (e.g., <code>ElectrostaticPotential &lt; 0</code>). Multiple constraints can be combined using Union or Intersection.</li>
+          <li><strong>Streamlines:</strong> Visualize current flow paths using vector field integration and rakes.</li>
+          <li><strong>Deformation:</strong> Warp the physical mesh based on mechanical displacement or stress tensors using <code>set_deformation</code>.</li>
+        </ul>
+      </section>
+
+      <section id="scripting" class="section">
+        <h2>Automation & Scripting</h2>
+        <p>Sentaurus Visual supports powerful automation via Tcl and Python scripts.</p>
+        <ul>
+          <li><strong>Running Scripts:</strong> Execute via <code>File > Run Script</code> or batch mode (<code>svisual -b -x script.tcl</code>).</li>
+          <li><strong>Command History:</strong> Every GUI action generates a Tcl command. Save your session using <code>File > Save Command File</code> or <code>save_plot_to_script</code>.</li>
+          <li><strong>Script Library:</strong> Automatically load custom macros by placing scripts with the <code>lib_</code> prefix in your library path.</li>
+        </ul>
+        
+        <h3>Example: Plotting an Id-Vg Curve</h3>
+        <pre><button class="copy-btn"><i class="far fa-copy"></i> Copy</button><code># Load the IV plot file
+load_file nsfet_des.plt
+create_plot -dataset nsfet_des -1d
+create_curve -plot Plot_1 -dataset nsfet_des -axisX "gate OuterVoltage" -axisY "drain TotalCurrent"
+
+# Format the plot
+set_axis_prop -plot Plot_1 -axis y -type log
+set_curve_prop -plot Plot_1 -curve "drain TotalCurrent" -color red -line_width 2
+set_axis_prop -plot Plot_1 -axis x -title "Gate Voltage (V)"
+set_axis_prop -plot Plot_1 -axis y -title "Drain Current (A)"
+export_view -plot Plot_1 -format png -resolution 1920x1080 idvg_plot.png</code></pre>
+      </section>
+
+      <section id="tcl-reference" class="section">
+        <h2>Tcl Command Reference</h2>
+        <p>A quick reference for the most commonly used Sentaurus Visual Tcl commands. Click a command name to copy it.</p>
+        
+        <div class="table-container">
+          <table id="cmdTable">
+            <thead>
+              <tr>
+                <th style="width: 20%;">Command</th>
+                <th style="width: 40%;">Description</th>
+                <th style="width: 40%;">Example</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="cmd-name" title="Click to copy">load_file</span></td>
+                <td>Loads a TDR, PLT, or other supported file into a dataset.</td>
+                <td><span class="cmd-ex">load_file nsfet.tdr -name myData</span></td>
+              </tr>
+              <tr>
+                <td><span class="cmd-name" title="Click to copy">create_plot</span></td>
+                <td>Creates a new 1D, 2D, or 3D plot window.</td>
+                <td><span class="cmd-ex">create_plot -dataset myData -2d</span></td>
+              </tr>
+              <tr>
+                <td><span class="cmd-name" title="Click to copy">create_curve</span></td>
+                <td>Plots XY data on a 1D plot or calculates math expressions.</td>
+                <td><span class="cmd-ex">create_curve -plot Plot_1 -axisX time -axisY current</span></td>
+              </tr>
+              <tr>
+                <td><span class="cmd-name" title="Click to copy">create_cutline</span></td>
+                <td>Extracts a 1D line of data from a 2D/3D dataset.</td>
+                <td><span class="cmd-ex">create_cutline -dataset myData -type x -position 0.5</span></td>
+              </tr>
+              <tr>
+                <td><span class="cmd-name" title="Click to copy">create_cutplane</span></td>
+                <td>Creates a 2D slice through a 3D dataset.</td>
+                <td><span class="cmd-ex">create_cutplane -dataset my3D -type z -position 0.0</span></td>
+              </tr>
+              <tr>
+                <td><span class="cmd-name" title="Click to copy">set_curve_prop</span></td>
+                <td>Modifies curve attributes (color, style, markers).</td>
+                <td><span class="cmd-ex">set_curve_prop -curve C1 -color blue -line_style solid</span></td>
+              </tr>
+              <tr>
+                <td><span class="cmd-name" title="Click to copy">set_axis_prop</span></td>
+                <td>Modifies axis scale, title, range, and ticks.</td>
+                <td><span class="cmd-ex">set_axis_prop -axis y -type log -title "Id (A)"</span></td>
+              </tr>
+              <tr>
+                <td><span class="cmd-name" title="Click to copy">set_legend_prop</span></td>
+                <td>Adjusts legend visibility and positioning.</td>
+                <td><span class="cmd-ex">set_legend_prop -plot Plot_1 -position {0.8 0.9}</span></td>
+              </tr>
+              <tr>
+                <td><span class="cmd-name" title="Click to copy">set_field_prop</span></td>
+                <td>Sets color maps, scale types, and visibility for fields.</td>
+                <td><span class="cmd-ex">set_field_prop -field Doping -scale log -show_bands</span></td>
+              </tr>
+              <tr>
+                <td><span class="cmd-name" title="Click to copy">set_material_prop</span></td>
+                <td>Changes rendering properties for specific materials.</td>
+                <td><span class="cmd-ex">set_material_prop -material Silicon -color gray</span></td>
+              </tr>
+              <tr>
+                <td><span class="cmd-name" title="Click to copy">probe_curve</span></td>
+                <td>Extracts specific X or Y values from a 1D curve.</td>
+                <td><span class="cmd-ex">set vth [probe_curve -curve Id -target_y 1e-7]</span></td>
+              </tr>
+              <tr>
+                <td><span class="cmd-name" title="Click to copy">probe_field</span></td>
+                <td>Extracts a scalar/vector field value at specific (x,y,z).</td>
+                <td><span class="cmd-ex">probe_field -dataset D1 -field Potential -coord {0 0 0}</span></td>
+              </tr>
+              <tr>
+                <td><span class="cmd-name" title="Click to copy">integrate_field</span></td>
+                <td>Integrates a field over a region, material, or boundary.</td>
+                <td><span class="cmd-ex">integrate_field -dataset D1 -field eDensity -region Channel</span></td>
+              </tr>
+              <tr>
+                <td><span class="cmd-name" title="Click to copy">create_iso</span></td>
+                <td>Creates an isosurface/isoline at a specific field value.</td>
+                <td><span class="cmd-ex">create_iso -dataset D1 -field Potential -value 0.5</span></td>
+              </tr>
+              <tr>
+                <td><span class="cmd-name" title="Click to copy">export_view</span></td>
+                <td>Saves the current plot as an image file (PNG, TIF).</td>
+                <td><span class="cmd-ex">export_view -format png -resolution 1024x768 out.png</span></td>
+              </tr>
+              <tr>
+                <td><span class="cmd-name" title="Click to copy">save_plot_to_script</span></td>
+                <td>Exports the commands required to recreate a plot.</td>
+                <td><span class="cmd-ex">save_plot_to_script -plot Plot_1 script.tcl</span></td>
+              </tr>
+              <tr>
+                <td><span class="cmd-name" title="Click to copy">link_plots</span></td>
+                <td>Synchronizes views (pan/zoom) between multiple plots.</td>
+                <td><span class="cmd-ex">link_plots -plots {Plot_1 Plot_2}</span></td>
+              </tr>
+              <tr>
+                <td><span class="cmd-name" title="Click to copy">overlay_plots</span></td>
+                <td>Overlays curves or fields from different datasets.</td>
+                <td><span class="cmd-ex">overlay_plots -plot1 P1 -plot2 P2</span></td>
+              </tr>
+              <tr>
+                <td><span class="cmd-name" title="Click to copy">undo</span></td>
+                <td>Reverts the last visualization operation.</td>
+                <td><span class="cmd-ex">undo</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="python-commands" class="section">
+        <h2>Python Commands</h2>
+        <p>Sentaurus Visual includes a Python scripting interface via the <code>sv</code> package. This allows you to leverage Python's extensive ecosystem (e.g., NumPy, Pandas, Matplotlib) alongside TCAD visualization.</p>
+        
+        <ul>
+          <li><strong>Namespace:</strong> All commands are accessed via the <code>sv</code> module (e.g., <code>sv.load_file(...)</code>).</li>
+          <li><strong>Help:</strong> Access built-in documentation using Python's help system: <code>help(sv.create_plot)</code>.</li>
+          <li><strong>Mapping:</strong> Python commands generally mirror Tcl commands identically, replacing spaces with function calls and hyphens with kwargs.</li>
+        </ul>
+
+        <h3>Python Example</h3>
+        <pre><button class="copy-btn"><i class="far fa-copy"></i> Copy</button><code>import sv
+# Load file and create plot
+sv.load_file('device.tdr', name='myDevice')
+sv.create_plot(dataset='myDevice', type='2d')
+
+# Set field properties
+sv.set_field_prop(field='ElectrostaticPotential', scale='linear')
+sv.export_view(format='png', resolution='1920x1080', filename='potential.png')</code></pre>
+      </section>
+
+    </div>
+    
+    <footer class="footer">
+      <div>Sentaurus Visual Reference Guide generated for Synopsys TCAD T-2022.03+</div>
+      <div style="margin-top: 0.5rem;">
+        <a href="https://www.synopsys.com/silicon/tcad.html" target="_blank" rel="nofollow">Visit Synopsys TCAD Documentation</a>
+      </div>
+    </footer>
+  </main>
+
+  <!-- Global Tooltip for copying -->
+  <div id="copyTooltip" class="tooltip">Copied!</div>
+
+  <script>
+    // --- Dark/Light Theme Toggle ---
+    const themeToggle = document.getElementById('themeToggle');
+    const htmlEl = document.documentElement;
+    
+    // Check saved theme or system preference
+    const savedTheme = localStorage.getItem('svisual-theme');
+    if (savedTheme) {
+      htmlEl.setAttribute('data-theme', savedTheme);
+      updateThemeIcon(savedTheme);
+    } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      htmlEl.setAttribute('data-theme', 'dark');
+      updateThemeIcon('dark');
+    }
+
+    themeToggle.addEventListener('click', () => {
+      const current = htmlEl.getAttribute('data-theme');
+      const next = current === 'dark' ? 'light' : 'dark';
+      htmlEl.setAttribute('data-theme', next);
+      localStorage.setItem('svisual-theme', next);
+      updateThemeIcon(next);
+    });
+
+    function updateThemeIcon(theme) {
+      themeToggle.innerHTML = theme === 'dark' ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+    }
+
+    // --- Sidebar Mobile Toggle ---
+    const menuToggle = document.getElementById('menuToggle');
+    const sidebar = document.getElementById('sidebar');
+    
+    menuToggle.addEventListener('click', () => {
+      sidebar.classList.toggle('open');
+    });
+
+    // Close sidebar on link click (mobile)
+    document.querySelectorAll('.nav-link').forEach(link => {
+      link.addEventListener('click', () => {
+        if (window.innerWidth <= 768) {
+          sidebar.classList.remove('open');
+        }
+      });
+    });
+
+    // --- Scrollspy (Highlight TOC) ---
+    const sections = document.querySelectorAll('.section');
+    const navLinks = document.querySelectorAll('.nav-link');
+    const mainWrapper = document.getElementById('mainWrapper');
+
+    mainWrapper.addEventListener('scroll', () => {
+      let current = '';
+      const offset = 100;
+      
+      sections.forEach(sec => {
+        const sectionTop = sec.offsetTop;
+        if (mainWrapper.scrollTop >= sectionTop - offset) {
+          current = sec.getAttribute('id');
+        }
+      });
+
+      navLinks.forEach(link => {
+        link.classList.remove('active');
+        if (link.getAttribute('href').substring(1) === current) {
+          link.classList.add('active');
+        }
+      });
+    });
+
+    // --- Copy to Clipboard (Code blocks) ---
+    document.querySelectorAll('.copy-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const code = e.target.closest('pre').querySelector('code').innerText;
+        navigator.clipboard.writeText(code).then(() => {
+          const origText = btn.innerHTML;
+          btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+          setTimeout(() => btn.innerHTML = origText, 2000);
+        });
+      });
+    });
+
+    // --- Copy to Clipboard (Tcl Commands) ---
+    const tooltip = document.getElementById('copyTooltip');
+    document.querySelectorAll('.cmd-name').forEach(cmd => {
+      cmd.addEventListener('click', (e) => {
+        const text = e.target.innerText;
+        navigator.clipboard.writeText(text).then(() => {
+          // Show tooltip at cursor
+          const rect = e.target.getBoundingClientRect();
+          tooltip.style.left = rect.left + window.scrollX + (rect.width/2) - 30 + 'px';
+          tooltip.style.top = rect.top + window.scrollY - 30 + 'px';
+          tooltip.classList.add('show');
+          setTimeout(() => tooltip.classList.remove('show'), 1500);
+        });
+      });
+    });
+
+    // --- Search / Filter ---
+    const searchInput = document.getElementById('searchInput');
+    const tableRows = document.querySelectorAll('#cmdTable tbody tr');
+    const contentArea = document.getElementById('contentArea');
+
+    // Debounce function to limit rapid firing
+    function debounce(func, wait) {
+      let timeout;
+      return function(...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), wait);
+      };
+    }
+
+    // Basic text highlight logic (Optional enhancement, currently filters the table)
+    searchInput.addEventListener('input', debounce((e) => {
+      const term = e.target.value.toLowerCase();
+      
+      // Filter Tcl Table
+      let visibleCount = 0;
+      tableRows.forEach(row => {
+        const text = row.innerText.toLowerCase();
+        if (text.includes(term)) {
+          row.style.display = '';
+          visibleCount++;
+        } else {
+          row.style.display = 'none';
+        }
+      });
+
+      // If user is searching specifically for commands and table is off-screen, could scroll to it
+      if (term.length > 2 && visibleCount > 0) {
+        const tableRect = document.getElementById('cmdTable').getBoundingClientRect();
+        if (tableRect.top > window.innerHeight || tableRect.bottom < 0) {
+          // document.getElementById('tcl-reference').scrollIntoView({behavior: 'smooth'});
+        }
+      }
+    }, 300));
+
+  </script>
+</body>
+</html>
